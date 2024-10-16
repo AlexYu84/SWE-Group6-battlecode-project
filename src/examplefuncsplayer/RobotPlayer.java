@@ -82,6 +82,7 @@ public strictfp class RobotPlayer {
                         rc.pickupFlag(rc.getLocation());
                         rc.setIndicatorString("Holding a flag!");
                     }
+                    healNearbyFriend(rc);
                     // If we are holding an enemy flag, singularly focus on moving towards
                     // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
                     // to make sure setup phase has ended.
@@ -132,6 +133,18 @@ public strictfp class RobotPlayer {
         }
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
+    }
+    public static void healNearbyFriend(RobotController rc) throws GameActionException {
+        RobotInfo[] nearbyFriends = rc.senseNearbyRobots(2, rc.getTeam());
+
+        for (RobotInfo friend : nearbyFriends) {
+            if (friend.health < 1000 && rc.canHeal(friend.getLocation())) {
+                rc.heal(friend.getLocation());
+                System.out.println("Healed a friendly unit!");
+                rc.setIndicatorString("Healing: " + friend.getLocation());
+                break; // Heal only one unit per turn
+            }
+        }
     }
     public static void updateEnemyRobots(RobotController rc) throws GameActionException{
         // Sensing methods can be passed in a radius of -1 to automatically 
