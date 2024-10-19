@@ -31,6 +31,7 @@ public strictfp class RobotPlayer {
             turnCount += 1;
 
             try {
+
                 if (!rc.isSpawned()) {
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
                     MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
@@ -40,6 +41,7 @@ public strictfp class RobotPlayer {
                         rc.spawn(randomLoc);
 
                         int randomDuckType = rng.nextInt(3);
+                        // using shared array index 0 to keep track of healer ducks which should not exceed 10
 
                         switch(randomDuckType) {
                             case 0:
@@ -51,6 +53,7 @@ public strictfp class RobotPlayer {
                         }
 
                     }
+
                 }
 
             } catch (GameActionException e) {
@@ -66,4 +69,5 @@ public strictfp class RobotPlayer {
             }
         }
     }
+
 }

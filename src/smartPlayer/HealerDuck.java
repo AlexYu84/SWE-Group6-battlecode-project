@@ -1,12 +1,11 @@
 package smartPlayer;
 
-import battlecode.common.Clock;
-import battlecode.common.GameActionException;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class HealerDuck {
 
     public static void run(RobotController rc) throws GameActionException {
+        // share
         while (true) {
 
             try {
@@ -14,10 +13,39 @@ public class HealerDuck {
 
                     // logic for builder that is spawned
                     System.out.println("Healer Running...");
+                    int round = rc.getRoundNum();
+                    if(round <= GameConstants.SETUP_ROUNDS) {
+                        FlagInfo [] flags = rc.senseNearbyFlags(-1, rc.getTeam());
+                        for(FlagInfo flag : flags) {
+                            if(rc.canPickupFlag(flag.getLocation())) {
+                                rc.pickupFlag(flag.getLocation());
+                                break;
+                            }
+                        }
+                        rc.canWriteSharedArray(0,0);
+                        PathFind.explore(rc);
+                    }
+                    else {
+                        RobotInfo[] nearbyFriends = rc.senseNearbyRobots(2, rc.getTeam());
+                        for (RobotInfo friend : nearbyFriends) {
+                            if (friend.health < 1000 && rc.canHeal(friend.getLocation()) && rc.readSharedArray(0) < 10) {
+                                rc.heal(friend.getLocation());
+                                System.out.println("Healed a friendly unit!");
+                                rc.setIndicatorString("Healing: " + friend.getLocation());
+                                break; // Heal only one unit per turn
+                            }
+                        }
+                        rc.canWriteSharedArray(0, rc.readSharedArray(0) + 1);
+                        //TODO:
+                        // please advice me here, if the healer duck once heals a friend where should it move than
+                        // as of now i want it to move randomly anywhere, i will uncoment it once your ducks are ready
+                        // to test it again
+                        //PathFind.explore(rc);
 
+                    }
                 } else {
-
-                    // error log here
+                    System.out.println("duck not spawned!!!!..");
+                    return;
 
                 }
 
