@@ -10,18 +10,10 @@ public class HealerDuck {
 
             try {
                 if (rc.isSpawned()) {
-
                     // logic for builder that is spawned
                     System.out.println("Healer Running...");
                     int round = rc.getRoundNum();
                     if(round <= GameConstants.SETUP_ROUNDS) {
-                        FlagInfo [] flags = rc.senseNearbyFlags(-1, rc.getTeam());
-                        for(FlagInfo flag : flags) {
-                            if(rc.canPickupFlag(flag.getLocation())) {
-                                rc.pickupFlag(flag.getLocation());
-                                break;
-                            }
-                        }
                         rc.canWriteSharedArray(0,0);
                         PathFind.explore(rc);
                     }
@@ -36,11 +28,7 @@ public class HealerDuck {
                             }
                         }
                         rc.canWriteSharedArray(0, rc.readSharedArray(0) + 1);
-                        //TODO:
-                        // please advice me here, if the healer duck once heals a friend where should it move than
-                        // as of now i want it to move randomly anywhere, i will uncoment it once your ducks are ready
-                        // to test it again
-                        //PathFind.explore(rc);
+                        PathFind.explore(rc);
 
                     }
                 } else {
