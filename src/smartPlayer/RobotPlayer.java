@@ -31,6 +31,7 @@ public strictfp class RobotPlayer {
             turnCount += 1;
 
             try {
+
                 if (!rc.isSpawned()) {
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
                     MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
@@ -43,7 +44,7 @@ public strictfp class RobotPlayer {
 
                         switch(randomDuckType) {
                             case 0:
-                                AttackDuck.run(rc);
+                                PathFind.explore(rc);
                             case 1:
                                 HealerDuck.run(rc);
                             case 2:
@@ -51,6 +52,7 @@ public strictfp class RobotPlayer {
                         }
 
                     }
+
                 }
 
             } catch (GameActionException e) {
@@ -66,4 +68,5 @@ public strictfp class RobotPlayer {
             }
         }
     }
+
 }
