@@ -178,9 +178,28 @@ public class BuilderDuck {
 
     // Helper function which will lead the RC to build water traps
     private static void buildWaterTraps(RobotController rc) throws GameActionException {
-        if (rc.canBuild(TrapType.WATER, rc.getLocation()) && !rcInSpawn(rc)) {
-            rc.build(TrapType.WATER, rc.getLocation());
+
+        boolean hasTrap = false;
+
+        for (Direction dir : directions) {
+
+            try {
+                MapLocation mapLocation = rc.getLocation().add(dir);
+                if (rc.senseMapInfo(mapLocation).getTrapType() != TrapType.NONE) {
+                    hasTrap = true;
+                }
+            } catch (Exception e) {
+                System.out.println("Tried to move to a location beyond map... moving on...");
+            }
+
         }
+
+        if (!hasTrap) {
+            if (rc.canBuild(TrapType.WATER, rc.getLocation()) && !rcInSpawn(rc)) {
+                rc.build(TrapType.WATER, rc.getLocation());
+            }
+        }
+
     }
 
     // Helper function which will lead the RC to randomly protect a flag and build traps around it
