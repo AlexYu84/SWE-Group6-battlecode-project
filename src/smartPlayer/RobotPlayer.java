@@ -41,11 +41,10 @@ public strictfp class RobotPlayer {
                         rc.spawn(randomLoc);
 
                         int randomDuckType = rng.nextInt(3);
-                        // using shared array index 0 to keep track of healer ducks which should not exceed 10
 
                         switch(randomDuckType) {
                             case 0:
-                                AttackDuck.run(rc);
+                                PathFind.explore(rc);
                             case 1:
                                 HealerDuck.run(rc);
                             case 2:
