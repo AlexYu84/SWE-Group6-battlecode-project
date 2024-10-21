@@ -5,7 +5,7 @@ public class PathFind {
 
     public static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(loc);
-        if(rc.canMove(dir)) {
+        if(rc.canMove(dir) && (!rc.senseMapInfo(loc).isWall())) {
             rc.move(dir);
         }
         else if(rc.canFill(rc.getLocation().add(dir))) {
@@ -13,7 +13,7 @@ public class PathFind {
         }
         else {
             Direction randomDir = Direction.allDirections()[RobotPlayer.rng.nextInt(8)];
-            if(rc.canMove(randomDir)) {
+            if(rc.canMove(randomDir) && (!rc.senseMapInfo(loc).isWall())) {
                 rc.move(randomDir);
             }
         }
