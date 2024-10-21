@@ -16,6 +16,8 @@ public class AttackDuck {
             Direction.NORTHWEST,
     };
 
+    static MapLocation startingLocation;
+
     public static void run(RobotController rc) throws GameActionException {
         while (true) {
             try {
@@ -25,7 +27,9 @@ public class AttackDuck {
                     int round = rc.getRoundNum();
                     MapLocation[] crumbLocations = rc.senseNearbyCrumbs(-1);
                     MapLocation[] flags = rc.senseBroadcastFlagLocations();
-                    if (round < 150) {
+                    boolean hasFlag = false;
+
+                    if (round < 150 && !hasFlag) {
                         if (crumbLocations.length > 0) {
                             MapLocation nearestCrumb = crumbLocations[0];
                             if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
@@ -40,6 +44,21 @@ public class AttackDuck {
                     } else {
                         // Sense nearby enemy robots within √4 (i.e., 2 tiles)
                         RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+
+                        if (hasFlag){
+                            //head back to starting location
+                            Direction returnDirection = rc.getLocation().directionTo(startingLocation);
+                            if(rc.canMove(returnDirection)){
+                                rc.move(returnDirection);
+                            }
+                            //drop flag when at starting location
+                            if(rc.getLocation().equals(startingLocation)){
+                                hasFlag = false;
+                                System.out.println("Flag secured!");
+                                //reward 50 crumbs for retrieving flag
+                                awardCrumbs(rc, 50);
+                            }
+                        }
 
                         if (enemies.length > 0) {
                             MapLocation enemyLocation = enemies[0].location;
@@ -62,7 +81,7 @@ public class AttackDuck {
                                 if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
                                     rc.move(rc.getLocation().directionTo(nearestCrumb));
                                 }
-                            } else if(flags.length > 0) {
+                            } else if(flags.length > 0 && !hasFlag) {
                                 MapLocation nearestFlag = flags[0];
                                 if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
                                     rc.move(rc.getLocation().directionTo(nearestFlag));
@@ -76,7 +95,11 @@ public class AttackDuck {
                                         }
                                     }
                                 }
-                            }else{
+                                if (rc.getLocation().equals(nearestFlag)) {
+                                    hasFlag = true;
+                                    System.out.println("Picked up a flag!");
+                                }
+                            } else{
                                 Direction dir = directions[rng.nextInt(directions.length)];
                                 if (rc.canMove(dir)) {
                                     rc.move(dir);
@@ -86,6 +109,7 @@ public class AttackDuck {
                     }
                 } else {
                     System.err.println("Attacker not spawned properly.");
+                    return;
                 }
             } catch (Exception e) {
                 System.err.println("Exception: " + e.getMessage());
