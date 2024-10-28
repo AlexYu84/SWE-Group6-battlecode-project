@@ -21,6 +21,9 @@ public class AttackDuck {
     static MapLocation startingLocation;
 
     public static void run(RobotController rc) throws GameActionException {
+        boolean hasFlag = false;
+        boolean isStuck = false;
+        startingLocation = rc.getLocation();
         while (true) {
             try {
                 if (rc.isSpawned()) {
@@ -29,14 +32,39 @@ public class AttackDuck {
                     int round = rc.getRoundNum();
                     MapLocation[] crumbLocations = rc.senseNearbyCrumbs(-1);
                     MapLocation[] flags = rc.senseBroadcastFlagLocations();
-                    boolean hasFlag = false;
-                    boolean isStuck = false;
+                    MapLocation closestSpawn, myLoc = null;
 
+                    if (hasFlag){
+                        //head back to starting location
+                        Direction returnDirection = rc.getLocation().directionTo(startingLocation);
+                        if(rc.canMove(returnDirection)){
+                            System.out.println("canMove returnDirection is " + returnDirection);
+                            fillWater(rc);
+                            rc.move(returnDirection);
+                        }else{
+                            // A* implementation!
+                            Direction[] allDirections = Direction.values();
+                            for (Direction direction : allDirections) {
+                                if(rc.canMove(direction)){
+                                    rc.move(direction);
+                                    break;
+                                }
+                            }
+                        }
+                        //drop flag when at starting location
+                        if(rc.getLocation() == startingLocation && rc.canDropFlag(rc.getLocation())){
+                            rc.dropFlag(rc.getLocation());
+                            hasFlag = false;
+                            System.out.println("Flag secured!");
+                            //reward 50 crumbs for retrieving flag
+                            awardCrumbs(rc, 50);
+                        }
+                    }
 
                     if (isStuck){
                         fillWater(rc);
                         isStuck = false;
-                    } else if (round < 150 && !hasFlag) {
+                    } else if (round < 150) {
 
                         if (crumbLocations.length > 0) {
                             MapLocation nearestCrumb = crumbLocations[0];
@@ -45,30 +73,34 @@ public class AttackDuck {
                             } else{
                                 isStuck = true;
                             }
-                        }else{
+                        }else {
                             Direction dir = directions[rng.nextInt(directions.length)];
                             if (rc.canMove(dir)) {
                                 rc.move(dir);
                             }
                         }
-                    } else {
-                        // Sense nearby enemy robots within √4 (i.e., 2 tiles)
-                        RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+                    }else if (round > 150 && round < 200) {
+                        MapInfo[] damn = rc.senseNearbyMapInfos(-1);
+                        MapLocation nearestDamWall = damn[0].getMapLocation();
+                        MapLocation currentLocation = rc.getLocation();
+                        double minDistance = currentLocation.distanceSquaredTo(nearestDamWall);
 
-                        if (hasFlag){
-                            //head back to starting location
-                            Direction returnDirection = rc.getLocation().directionTo(startingLocation);
-                            if(rc.canMove(returnDirection)){
-                                rc.move(returnDirection);
-                            }
-                            //drop flag when at starting location
-                            if(rc.getLocation().equals(startingLocation)){
-                                hasFlag = false;
-                                System.out.println("Flag secured!");
-                                //reward 50 crumbs for retrieving flag
-                                awardCrumbs(rc, 50);
+                        for(MapInfo d : damn){
+                            MapLocation damWallLocation = d.getMapLocation();
+                            double distance = currentLocation.distanceSquaredTo(damWallLocation);
+
+                            if(distance < minDistance){
+                                nearestDamWall = damWallLocation;
+                                minDistance = distance;
                             }
                         }
+                        Direction directionToDam = currentLocation.directionTo(nearestDamWall);
+                        if(rc.canMove(directionToDam)){
+                            rc.move(directionToDam);
+                        }
+                    }else{
+                        // Sense nearby enemy robots within √4 (i.e., 2 tiles)
+                        RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
 
                         if (enemies.length > 0) {
                             MapLocation enemyLocation = enemies[0].location;
@@ -93,7 +125,7 @@ public class AttackDuck {
                                     fillWater(rc);
                                     rc.move(rc.getLocation().directionTo(nearestCrumb));
                                 }
-                            } else if(flags.length > 0 && !hasFlag) {
+                            } else if(flags.length > 0) {
                                 MapLocation nearestFlag = flags[0];
                                 if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
                                     fillWater(rc);
@@ -104,14 +136,20 @@ public class AttackDuck {
                                         randomDir = directions[rng.nextInt(directions.length)];
                                         if (rc.canMove(randomDir)) {
                                             fillWater(rc);
+                                            // cooldown stuff going on here need to fix
                                             rc.move(randomDir);
                                             break;
                                         }
                                     }
                                 }
-                                if (rc.getLocation().equals(nearestFlag)) {
-                                    hasFlag = true;
-                                    System.out.println("Picked up a flag!");
+                                FlagInfo[] closeFlags = rc.senseNearbyFlags(8);
+                                if (closeFlags.length > 0) {
+                                    FlagInfo i = closeFlags[0];
+                                    if (rc.canPickupFlag(i.getLocation())) {
+                                        rc.pickupFlag(i.getLocation());
+                                        hasFlag = true;
+                                        System.out.println("Picked up a flag!");
+                                    }
                                 }
                             } else{
                                 Direction dir = directions[rng.nextInt(directions.length)];
