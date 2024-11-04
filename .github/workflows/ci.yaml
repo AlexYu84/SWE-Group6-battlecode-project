@@ -56,8 +56,8 @@ jobs:
         uses: barecheck/code-coverage-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }} # Use the default GitHub token
-          lcov-file: "build/reports/jacoco/test/jacocoTestReport.csv"
+          lcov-file: "build/reports/jacoco/test/jacocoTestReport.csv" # Ensure this matches your JaCoCo output
           base-lcov-file: "ref-lcov.info"
-          minimum-ratio: 0
+          minimum-ratio: 0 # This can be adjusted based on your requirements
           send-summary-comment: true
           show-annotations: "warning"
