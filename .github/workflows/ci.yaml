@@ -19,6 +19,10 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
 
+      - name: Install JavaFX
+        run: sudo apt-get install openjfx
+
+
       - name: Build with Gradle
         run: ./gradlew clean test jacocoTestReport
 
