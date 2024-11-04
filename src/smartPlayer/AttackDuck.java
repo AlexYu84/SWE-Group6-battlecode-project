@@ -4,6 +4,8 @@ import battlecode.common.*;
 
 import java.awt.*;
 import java.util.Random;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AttackDuck {
     static final Random rng = new Random(6147);
@@ -19,6 +21,8 @@ public class AttackDuck {
     };
 
     static MapLocation startingLocation;
+    static Set<MapLocation> recentLocations = new HashSet<>();
+    static final int MAX_RECENT_LOCATIONS = 5;
 
     public static void run(RobotController rc) throws GameActionException {
         boolean hasFlag = false;
@@ -38,18 +42,27 @@ public class AttackDuck {
                         //head back to starting location
                         Direction returnDirection = rc.getLocation().directionTo(startingLocation);
                         if(rc.canMove(returnDirection)){
-                            System.out.println("canMove returnDirection is " + returnDirection);
-                            fillWater(rc);
-                            rc.move(returnDirection);
+//                            System.out.println("canMove returnDirection is " + returnDirection);
+                            if(rc.isActionReady()) {
+                                fillWater(rc);
+                            }
+                            if(rc.isMovementReady()) {
+                                rc.move(returnDirection);
+                                addRecentLocation(rc.getLocation());
+                            }
                         }else{
                             // A* implementation!
                             Direction[] allDirections = Direction.values();
                             for (Direction direction : allDirections) {
-                                if(rc.canMove(direction)){
-                                    rc.move(direction);
-                                    break;
+                                MapLocation potentialLocation = rc.getLocation().add(direction);
+                                if(rc.canMove(direction) && !recentLocations.contains(potentialLocation)){
+                                    if(rc.isMovementReady()) {
+                                        rc.move(direction);
+                                        addRecentLocation(potentialLocation);
+                                        break;
+                                    }
                                 }
-                            }
+                            };
                         }
                         //drop flag when at starting location
                         if(rc.getLocation() == startingLocation && rc.canDropFlag(rc.getLocation())){
@@ -69,34 +82,49 @@ public class AttackDuck {
                         if (crumbLocations.length > 0) {
                             MapLocation nearestCrumb = crumbLocations[0];
                             if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
-                                rc.move(rc.getLocation().directionTo(nearestCrumb));
+                                if(rc.isActionReady()) {
+                                    fillWater(rc);
+                                }
+                                if(rc.isMovementReady()) {
+                                    rc.move(rc.getLocation().directionTo(nearestCrumb));
+                                }
                             } else{
                                 isStuck = true;
                             }
                         }else {
                             Direction dir = directions[rng.nextInt(directions.length)];
                             if (rc.canMove(dir)) {
-                                rc.move(dir);
+                                if(rc.isActionReady()) {
+                                    fillWater(rc);
+                                }
+                                if(rc.isMovementReady()) {
+                                    rc.move(dir);
+                                }
                             }
                         }
                     }else if (round > 150 && round < 200) {
                         MapInfo[] damn = rc.senseNearbyMapInfos(-1);
-                        MapLocation nearestDamWall = damn[0].getMapLocation();
-                        MapLocation currentLocation = rc.getLocation();
-                        double minDistance = currentLocation.distanceSquaredTo(nearestDamWall);
+                        if (damn.length > 0) {
+                            MapLocation nearestDamWall = damn[0].getMapLocation();
+                            MapLocation currentLocation = rc.getLocation();
+                            double minDistance = currentLocation.distanceSquaredTo(nearestDamWall);
 
-                        for(MapInfo d : damn){
-                            MapLocation damWallLocation = d.getMapLocation();
-                            double distance = currentLocation.distanceSquaredTo(damWallLocation);
 
-                            if(distance < minDistance){
-                                nearestDamWall = damWallLocation;
-                                minDistance = distance;
+                            for (MapInfo d : damn) {
+                                MapLocation damWallLocation = d.getMapLocation();
+                                double distance = currentLocation.distanceSquaredTo(damWallLocation);
+
+                                if (distance < minDistance) {
+                                    nearestDamWall = damWallLocation;
+                                    minDistance = distance;
+                                }
                             }
-                        }
-                        Direction directionToDam = currentLocation.directionTo(nearestDamWall);
-                        if(rc.canMove(directionToDam)){
-                            rc.move(directionToDam);
+                            Direction directionToDam = currentLocation.directionTo(nearestDamWall);
+                            if (rc.canMove(directionToDam)) {
+                                if(rc.isMovementReady()) {
+                                    rc.move(directionToDam);
+                                }
+                            }
                         }
                     }else{
                         // Sense nearby enemy robots within √4 (i.e., 2 tiles)
@@ -105,8 +133,12 @@ public class AttackDuck {
                         if (enemies.length > 0) {
                             MapLocation enemyLocation = enemies[0].location;
                             if (rc.canMove(rc.getLocation().directionTo(enemyLocation))) {
-                                fillWater(rc);
-                                rc.move(rc.getLocation().directionTo(enemyLocation));
+                                if(rc.isActionReady()) {
+                                    fillWater(rc);
+                                }
+                                if(rc.isMovementReady()) {
+                                    rc.move(rc.getLocation().directionTo(enemyLocation));
+                                }
                             }
                             if (rc.canAttack(enemyLocation)) {
                                 rc.attack(enemyLocation);  // Attack method handles damage internally
@@ -119,26 +151,28 @@ public class AttackDuck {
                                 }
                             }
                         } else {
-                            if (crumbLocations.length > 0) {
-                                MapLocation nearestCrumb = crumbLocations[0];
-                                if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
-                                    fillWater(rc);
-                                    rc.move(rc.getLocation().directionTo(nearestCrumb));
-                                }
-                            } else if(flags.length > 0) {
+                            if(flags.length > 0) {
                                 MapLocation nearestFlag = flags[0];
                                 if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
-                                    fillWater(rc);
-                                    rc.move(rc.getLocation().directionTo(nearestFlag));
+                                    if(rc.isActionReady()) {
+                                        fillWater(rc);
+                                    }
+                                    if(rc.isMovementReady()) {
+                                        rc.move(rc.getLocation().directionTo(nearestFlag));
+                                    }
                                 }else{
                                     Direction randomDir;
                                     for (int i = 0; i < directions.length; i++){
                                         randomDir = directions[rng.nextInt(directions.length)];
                                         if (rc.canMove(randomDir)) {
-                                            fillWater(rc);
-                                            // cooldown stuff going on here need to fix
-                                            rc.move(randomDir);
-                                            break;
+                                            if(rc.isActionReady()) {
+                                                fillWater(rc);
+                                                // cooldown stuff going on here need to fix
+                                            }
+                                            if(rc.isMovementReady()) {
+                                                rc.move(randomDir);
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -154,8 +188,12 @@ public class AttackDuck {
                             } else{
                                 Direction dir = directions[rng.nextInt(directions.length)];
                                 if (rc.canMove(dir)) {
-                                    fillWater(rc);
+                                    if(rc.isActionReady()) {
+                                        fillWater(rc);
+                                    }
+                                    if(rc.isMovementReady()) {
                                     rc.move(dir);
+                                    }
                                 }
                             }
                         }
@@ -183,39 +221,65 @@ public class AttackDuck {
                 if(w.isWater() && rc.canFill(fillLoc)){
                     if ((fillLoc.x+ fillLoc.y)%2 == 1){
                         rc.fill(fillLoc);
-                        return;
+                    }else{
+                        wander(rc);
                     }
                     if(w.getCrumbs() > 30){
                         rc.fill(fillLoc);
                         return;
                     }
+                    wander(rc);
                     if (rc.canSenseLocation(fillLoc.add(Direction.NORTH))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
-                            rc.fill(fillLoc);
-                            return;
+                            if(rc.canFill(fillLoc)) {
+                                rc.fill(fillLoc);
+                                return;
+                            }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.SOUTH))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
-                            rc.fill(fillLoc);
-                            return;
+                            if(rc.canFill(fillLoc)) {
+                                rc.fill(fillLoc);
+                                return;
+                            }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.EAST))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.EAST)).isWall()){
-                            rc.fill(fillLoc);
-                            return;
+                            if(rc.canFill(fillLoc)) {
+                                rc.fill(fillLoc);
+                                return;
+                            }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.WEST))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.WEST)).isWall()){
-                            rc.fill(fillLoc);
-                            return;
+                            if(rc.canFill(fillLoc)) {
+                                rc.fill(fillLoc);
+                                return;
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    private static void addRecentLocation(MapLocation location){
+        recentLocations.add(location);
+        if(recentLocations.size() > MAX_RECENT_LOCATIONS){
+            recentLocations.iterator().next();
+        }
+    }
+
+    private static void wander(RobotController rc) throws GameActionException{
+        Direction[] directions = {
+                Direction.NORTH, Direction.NORTHEAST, Direction.EAST, Direction.SOUTHEAST,
+                Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST
+        };
+        Random rng = new Random(6147);
+        Direction randomDir = directions[rng.nextInt(directions.length)]; if (rc.canMove(randomDir)) { if(rc.isMovementReady()){ rc.move(randomDir); }}
     }
 
     private static void awardCrumbs(RobotController rc, int crumbs) throws GameActionException {
