@@ -2,6 +2,7 @@
 
 apply plugin: 'java'
 apply plugin: 'scala'
+apply plugin: 'jacoco' // Add JaCoCo plugin
 
 // Compatibility version: Java 8
 sourceCompatibility = 1.8
@@ -9,7 +10,7 @@ targetCompatibility = 1.8
 
 // Validate Java version
 if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
-    throw new GradleException("The engine must be run using Java 8")
+  throw new GradleException("The engine must be run using Java 8")
 }
 
 // Directory layout.
@@ -34,7 +35,6 @@ sourceSets {
   }
 }
 
-
 //////// IDE configuration ////////
 
 apply plugin: 'idea'
@@ -56,11 +56,10 @@ eclipse {
   }
 }
 
-
 //////// Versions ////////
 
 ext.versions = [
-  battlecode: new File(projectDir, "version.txt").text.trim()
+        battlecode: new File(projectDir, "version.txt").text.trim()
 ]
 
 configurations.all {
@@ -117,7 +116,7 @@ task update {
     def version = getVersionFromWeb((project.findProperty("onSaturn") ?: "false").toBoolean())
     if (version == null) {
       throw new Exception(
-        "Could not find new version number. Are you connected to the internet?"
+              "Could not find new version number. Are you connected to the internet?"
       )
     }
     if (versions.battlecode != version) {
@@ -128,7 +127,6 @@ task update {
     }
   }
 }
-
 
 //////// Dependencies ////////
 
@@ -159,20 +157,19 @@ if ((project.findProperty("onSaturn") ?: "false").toBoolean()) {
   }
 }
 
-
 configurations {
   client
 }
 
 def os = System.getProperty("os.name").toLowerCase()
 def clientName = os.startsWith('windows')
-                    ? 'battlecode24-client-win-'
-                    : os.startsWith('mac')
-                        ? 'battlecode24-client-mac-'
-                        : 'battlecode24-client-linux-'
+        ? 'battlecode24-client-win-'
+        : os.startsWith('mac')
+        ? 'battlecode24-client-mac-'
+        : 'battlecode24-client-linux-'
 def clientType = project.findProperty("compatibilityClient").toBoolean()
-                    ? "electron"
-                    : "tauri"
+        ? "electron"
+        : "tauri"
 
 dependencies {
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
@@ -188,6 +185,20 @@ dependencies {
   testImplementation group: 'org.scalatest', name: 'scalatest_2.11', version: '3.0.0'
 }
 
+//////// JaCoCo configuration ////////
+
+jacoco {
+  toolVersion = "0.8.8" // Use the latest version available
+}
+
+jacocoTestReport {
+  dependsOn test // ensures tests are run before generating the report
+  reports {
+    xml.enabled true
+    csv.enabled false
+    html.enabled true // generates HTML report
+  }
+}
 
 //////// Client ////////
 
@@ -213,7 +224,6 @@ task unpackClient(type: Copy) {
   into 'client/'
 }
 
-
 //////// Building ////////
 
 build.configure {
@@ -229,11 +239,10 @@ task verify(type: JavaExec) {
   mainClass = 'battlecode.instrumenter.Verifier'
   classpath = sourceSets.main.runtimeClasspath
   args = [
-    project.findProperty("team") ?: "examplefuncsplayer",
-    project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
+          project.findProperty("team") ?: "examplefuncsplayer",
+          project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
   ]
 }
-
 
 //////// Running ////////
 
@@ -249,26 +258,25 @@ task run(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   args = ['-c=-']
   jvmArgs = [
-    '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
-    '-Dbc.server.mode=headless',
-    '-Dbc.server.map-path=maps',
-    '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
-    '-Dbc.server.debug=false',
-    '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
-    '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
-    '-Dbc.game.team-a=' + project.property('teamA'),
-    '-Dbc.game.team-b=' + project.property('teamB'),
-    '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
-    '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
-    '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
-    '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
-    '-Dbc.game.maps=' + project.property('maps'),
-    '-Dbc.server.validate-maps=' + project.property('validateMaps'),
-    '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
-    '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
-  ]
+          '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
+          '-Dbc.server.mode=headless',
+          '-Dbc.server.map-path=maps',
+          '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
+          '-Dbc.server.debug=false',
+          '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
+          '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
+          '-Dbc.game.team-a=' + project.property('teamA'),
+          '-Dbc.game.team-b=' + project.property('teamB'),
+          '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
+          '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
+          '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
+          '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
+          '-Dbc.game.maps=' + project.property('maps'),
+          '-Dbc.server.validate-maps=' + project.property('validateMaps'),
+          '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
+                  '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
+                  ]
 }
-
 
 //////// Informational ////////
 
@@ -309,7 +317,6 @@ task listMaps {
     }
   }
 }
-
 
 //////// Submitting ////////
 

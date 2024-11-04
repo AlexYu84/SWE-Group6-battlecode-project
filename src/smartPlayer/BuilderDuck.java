@@ -75,7 +75,7 @@ public class BuilderDuck {
                                 // Once a natural barrier is sensed, move towards it and place the flag there
                                 Direction nextDir = rc.getLocation().directionTo(naturalBarrier);
                                 if (rc.canMove(nextDir)) {
-                                    rc.move(nextDir);
+                                    rc.move(nextDir)  ;
 
                                 } else if (rc.getLocation().add(nextDir).equals(naturalBarrier)) {
 
