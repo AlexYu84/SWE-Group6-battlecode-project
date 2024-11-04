@@ -220,44 +220,56 @@ public class AttackDuck {
                 MapLocation fillLoc = w.getMapLocation();
                 if(w.isWater() && rc.canFill(fillLoc)){
                     if ((fillLoc.x+ fillLoc.y)%2 == 1){
-                        rc.fill(fillLoc);
+                        if(rc.isActionReady()) {
+                            rc.fill(fillLoc);
+                        }
                     }else{
                         wander(rc);
                     }
                     if(w.getCrumbs() > 30){
-                        rc.fill(fillLoc);
-                        return;
+                        if(rc.isActionReady()) {
+                            rc.fill(fillLoc);
+                            return;
+                        }
                     }
                     wander(rc);
                     if (rc.canSenseLocation(fillLoc.add(Direction.NORTH))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
                             if(rc.canFill(fillLoc)) {
-                                rc.fill(fillLoc);
-                                return;
+                                if(rc.isActionReady()) {
+                                    rc.fill(fillLoc);
+                                    return;
+                                }
                             }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.SOUTH))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
-                            if(rc.canFill(fillLoc)) {
-                                rc.fill(fillLoc);
-                                return;
+                            if(rc.isActionReady()) {
+                                if (rc.canFill(fillLoc)) {
+                                    rc.fill(fillLoc);
+                                    return;
+                                }
                             }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.EAST))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.EAST)).isWall()){
-                            if(rc.canFill(fillLoc)) {
-                                rc.fill(fillLoc);
-                                return;
+                            if(rc.isActionReady()) {
+                                if (rc.canFill(fillLoc)) {
+                                    rc.fill(fillLoc);
+                                    return;
+                                }
                             }
                         }
                     }
                     if(rc.canSenseLocation(fillLoc.add(Direction.WEST))){
                         if(rc.senseMapInfo(fillLoc.add(Direction.WEST)).isWall()){
-                            if(rc.canFill(fillLoc)) {
-                                rc.fill(fillLoc);
-                                return;
+                            if(rc.isActionReady()) {
+                                if (rc.canFill(fillLoc)) {
+                                    rc.fill(fillLoc);
+                                    return;
+                                }
                             }
                         }
                     }
