@@ -198,8 +198,8 @@ jacocoTestReport {
   dependsOn test // ensures tests are run before generating the report
   reports {
     xml.enabled true
-    csv.enabled false
-    html.enabled true // generates HTML report
+    csv.enabled true
+    html.enabled true// generates HTML report
   }
 }
 
