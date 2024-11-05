@@ -1,13 +1,6 @@
 package smartPlayer;
 
 import battlecode.common.*;
-import javafx.util.Builder;
-import smartPlayer.AttackDuck;
-import smartPlayer.BuilderDuck;
-import smartPlayer.HealerDuck;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 public strictfp class RobotPlayer {
