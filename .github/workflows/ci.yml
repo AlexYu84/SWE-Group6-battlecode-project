@@ -6,7 +6,7 @@ on:
       - main  # Or specify the branch you want PRs to target
     paths:
       - '**/*.java'
-      - '**/*.gradle'  # Adjust if necessary to match files you want to trigger the action for
+      - '**/*.gradle'  #   Adjust if necessary to match files you want to trigger the action for
 
 jobs:
   build:
