@@ -1,7 +1,6 @@
 package smartPlayer;
 import battlecode.common.*;
 public class PathFind {
-    static Direction direction;
 
     public static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(loc);
@@ -21,14 +20,22 @@ public class PathFind {
     public static void explore(RobotController rc) throws GameActionException {
         MapLocation[] crumLocs = rc.senseNearbyCrumbs(-1);
         if(crumLocs.length > 0){
+            System.out.println("Crumbs found.");
             moveTowards(rc, crumLocs[0]);
         }
-        if(rc.isMovementReady()) {
-            if(direction != null && rc.canMove(direction)) {
-                rc.move(direction);
-            }
-            else {
-                direction = Direction.allDirections()[RobotPlayer.rng.nextInt(8)];
+        if (crumLocs.length == 0) {
+            System.out.println("No crumbs found.");
+            if (rc.isMovementReady()) {
+                System.out.println("Movement is ready.");
+                Direction randomDirection = Direction.allDirections()[RobotPlayer.rng.nextInt(8)];
+                if (rc.canMove(randomDirection)) {
+                    System.out.println("Can move in direction: " + randomDirection);
+                    rc.move(randomDirection);
+                } else {
+                    System.out.println("Cannot move in direction: " + randomDirection);
+                }
+            } else {
+                System.out.println("Movement is not ready.");
             }
         }
     }

@@ -14,7 +14,7 @@ public strictfp class RobotPlayer {
 
     static int turnCount = 0;
 
-    static final Random rng = new Random(6147);
+    static Random rng = new Random(6147);
     static final Direction[] directions = {
             Direction.NORTH,
             Direction.NORTHEAST,
