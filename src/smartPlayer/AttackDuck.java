@@ -7,7 +7,7 @@ import battlecode.common.RobotController;
 public class AttackDuck {
 
     public static void run(RobotController rc) throws GameActionException {
-        while (true) {
+        while (true)  {
 
             try {
                 if (rc.isSpawned()) {

@@ -2,6 +2,69 @@
 
 apply plugin: 'java'
 apply plugin: 'scala'
+//////// General configuration ////////
+apply plugin: 'jacoco'  // Apply the JaCoCo plugin
+
+// Compatibility version: Java 8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Validate Java version
+if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
+  throw new GradleException("The engine must be run using Java 8")
+}
+
+// Directory layout.
+sourceSets {
+  main {
+    java.srcDirs = ["src"]
+    java.includes = ["**/*.java"]
+    java.destinationDirectory.set(file("$buildDir/classes"))
+
+    scala.srcDirs = ["src"]
+    scala.includes = ["**/*.scala"]
+    scala.destinationDirectory.set(file("$buildDir/classes"))
+  }
+  test {
+    java.srcDirs = ["test"]
+    java.includes = ["**/*.java"]
+    java.destinationDirectory.set(file("$buildDir/tests"))
+
+    scala.srcDirs = ["test"]
+    scala.includes = ["**/*.scala"]
+    scala.destinationDirectory.set(file("$buildDir/tests"))
+  }
+}
+
+//////// Test Coverage ////////
+
+jacoco {
+  toolVersion = "0.8.8"  // Specify JaCoCo version
+}
+
+test {
+  useJUnitPlatform()  // Ensure you're using JUnit 5 if applicable
+  finalizedBy jacocoTestReport  // Ensures the report is generated after tests
+}
+
+jacocoTestReport {
+  dependsOn test  // Ensures tests are run before generating the report
+  reports {
+    xml {
+      enabled = true
+      destination = file("$buildDir/reports/jacoco/testCoverageReport.xml")  // Set the XML report destination
+    }
+    html {
+      enabled = true
+      destination = file("$buildDir/reports/jacoco/html")  // Set the HTML report destination
+    }
+    csv.enabled = false
+  }
+}
+
+task generateCoverageReport {
+  dependsOn test, jacocoTestReport  // Ensure the coverage report task depends on the test task
+}
 
 // Compatibility version: Java 8
 sourceCompatibility = 1.8
@@ -175,6 +238,9 @@ def clientType = project.findProperty("compatibilityClient").toBoolean()
                     : "tauri"
 
 dependencies {
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'  // JUnit 5 API
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0'  // JUnit 5 engine (required to run tests)
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.7.0'
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
   // The Battlecode engine.
