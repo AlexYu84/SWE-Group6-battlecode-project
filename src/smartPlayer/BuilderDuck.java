@@ -203,7 +203,7 @@ public class BuilderDuck {
     // Helper function which will lead the RC to randomly protect a flag and build traps around it
     private static void protectRandomFlag(RobotController rc) throws GameActionException {
         // Sense all nearby flags
-        FlagInfo[] flags = rc.senseNearbyFlags(-1);
+        FlagInfo[] flags = rc.senseNearbyFlags(-1, rc.getTeam());
 
         if(flags.length > 0) {
 
