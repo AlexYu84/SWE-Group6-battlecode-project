@@ -32,12 +32,13 @@ jobs:
         run: ./gradlew test  # Runs the tests
 
       - name: Upload JUnit test results to GitHub Actions
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: test-results
           path: build/test-results/test/*.xml  # Uploads the JUnit test results for analysis
 
-      - name: Upload test results as check run annotation
-        uses: gradle/test-report-action@v1
+      - name: Upload HTML test report to GitHub Actions
+        uses: actions/upload-artifact@v3
         with:
-          report-path: build/reports/tests/test/index.html  # Uploads the HTML test report
+          name: test-report
+          path: build/reports/tests/test/index.html  # Uploads the HTML test report
