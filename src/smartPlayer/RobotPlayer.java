@@ -40,15 +40,17 @@ public strictfp class RobotPlayer {
                     if (rc.canSpawn(randomLoc)) {
                         rc.spawn(randomLoc);
 
-                        int randomDuckType = rng.nextInt(3);
+                        int randomDuckType = rng.nextInt(10);
 
-                        switch(randomDuckType) {
-                            case 0:
-                                PathFind.explore(rc);
-                            case 1:
-                                HealerDuck.run(rc);
-                            case 2:
-                                BuilderDuck.run(rc);
+                        if (randomDuckType <= 4) {
+                            // 50% chance for attack duck
+                            AttackDuck.run(rc);
+                        } else if (randomDuckType == 5 || randomDuckType == 6) {
+                            // 20% chance for a healer duck
+                            HealerDuck.run(rc);
+                        } else {
+                            // 30% chance for builder duck
+                            BuilderDuck.run(rc);
                         }
 
                     }

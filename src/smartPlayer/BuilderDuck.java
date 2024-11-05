@@ -70,7 +70,7 @@ public class BuilderDuck {
                                 }
 
 
-                            } else {
+                            } else { // natural barrier has been found
 
                                 // Once a natural barrier is sensed, move towards it and place the flag there
                                 Direction nextDir = rc.getLocation().directionTo(naturalBarrier);
@@ -104,7 +104,7 @@ public class BuilderDuck {
                                 }
                             }
 
-                        } else {
+                        } else { // SETUP ROUND: builder actions after flags has been set
 
                             FlagInfo[] flags = rc.senseNearbyFlags(-1);
 
@@ -112,22 +112,25 @@ public class BuilderDuck {
                             if(flags.length > 0) {
                                 FlagInfo flagToProtect = flags[rng.nextInt(flags.length)];
 
-                                Direction dir = rc.getLocation().directionTo(flagToProtect.getLocation());
-                                if(!rc.getLocation().add(dir).equals(flagToProtect.getLocation())) {
-                                    if (rc.canMove(dir)) {
-                                        rc.move(dir);
-                                    }
-                                } else {
+                                if (!flagToProtect.isPickedUp()) {
 
-                                    // this will move rc onto the flag location
-                                    if (rc.canMove(dir)) {
-                                        rc.move(dir);
-                                    }
+                                    Direction dir = rc.getLocation().directionTo(flagToProtect.getLocation());
+                                    if(!rc.getLocation().add(dir).equals(flagToProtect.getLocation())) {
+                                        if (rc.canMove(dir)) {
+                                            rc.move(dir);
+                                        }
+                                    } else {
 
-                                    // surround flag in all directions with explosive trap
-                                    for (Direction direction : directions) {
-                                        if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) && !rcInSpawn(rc)) {
-                                            rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));
+                                        // this will move rc onto the flag location
+                                        if (rc.canMove(dir)) {
+                                            rc.move(dir);
+                                        }
+
+                                        // surround flag in all directions with explosive trap
+                                        for (Direction direction : directions) {
+                                            if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) && !rcInSpawn(rc)) {
+                                                rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));
+                                            }
                                         }
                                     }
                                 }
@@ -137,8 +140,6 @@ public class BuilderDuck {
                                 if (rc.canMove(direction)) {
                                     rc.move(direction);
                                 }
-
-
                             }
 
                         }
@@ -146,16 +147,13 @@ public class BuilderDuck {
                     } else {
                         // outside of setup rounds... do...
 
-                        // This needs more work, most of this code is just placeholder.
                         int action = rng.nextInt(10);
 
-                        // We can possibly increase/decrease chance of 1 trap happening over the other.
-                        if (action <= 2) {
+                        if (action <= 5) { // 60% chance to protect flag
                             protectRandomFlag(rc);
-                        } else if (action == 7) {
+                        } else if (action == 6 || action == 7) { // 20% chance to built water trap
                             buildWaterTraps(rc);
-                        } else {
-                            // just move randomly, save crumbs
+                        } else { // 20% chance to just move randomly, save crumbs
                             Direction direction = directions[rng.nextInt(directions.length)];
                             if (rc.canMove(direction)) {
                                 rc.move(direction);
@@ -205,19 +203,20 @@ public class BuilderDuck {
     // Helper function which will lead the RC to randomly protect a flag and build traps around it
     private static void protectRandomFlag(RobotController rc) throws GameActionException {
         // Sense all nearby flags
-        FlagInfo[] flags = rc.senseNearbyFlags(-1);
+        FlagInfo[] flags = rc.senseNearbyFlags(-1, rc.getTeam());
 
-        // Randomly select a flag to protect
         if(flags.length > 0) {
+
+            // Randomly select a flag to protect
             FlagInfo flagToProtect = flags[rng.nextInt(flags.length)];
 
             // Keep moving towards the flag
             Direction dir = rc.getLocation().directionTo(flagToProtect.getLocation());
+
             if (!rc.getLocation().add(dir).equals(flagToProtect.getLocation())) {
                 if (rc.canMove(dir)) {
                     rc.move(dir);
                 }
-
             } else {
 
                 // Once near the flag, perform one more move to move onto the flag location
@@ -225,14 +224,62 @@ public class BuilderDuck {
                     rc.move(dir);
                 }
 
-                // Surround flag in all directions with explosive trap
-                for (Direction direction : directions) {
-                    if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) && !rcInSpawn(rc)) {
-                        rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));
+                // If the nearby flag is protected, switch to attack mode, otherwise stay in defend mode
+                if (!isFlagProtected(rc)) {
+                    // defend mode
+                    // Surround flag in all directions with explosive trap
+                    for (Direction direction : directions) {
+                        if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) && !rcInSpawn(rc)) {
+                            rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));
+                        }
+                    }
+                } else {
+                    // attack mode
+                    // Sense nearby enemy robots
+                    RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+
+                    // If enemies are found, find the closest enemy and attack it.
+                    if (nearbyEnemies.length > 0) {
+
+                        // find the closest enemy to attack
+                        RobotInfo toAttack = null;
+                        int closestDistance = Integer.MAX_VALUE;
+                        for (RobotInfo enemyRobot : nearbyEnemies) {
+                            if (rc.getLocation().distanceSquaredTo(enemyRobot.getLocation()) <= closestDistance) {
+                                closestDistance = rc.getLocation().distanceSquaredTo(enemyRobot.getLocation());
+                                toAttack = enemyRobot;
+                            }
+                        }
+
+                        // if it can attack without moving, attack it.
+                        if (toAttack != null) {
+                            if(rc.canAttack(toAttack.getLocation())) {
+                                rc.attack(toAttack.getLocation());
+                            }
+                        }
                     }
                 }
+
             }
         }
+    }
+
+    // Helper function to check if the flag near rc is protected by bombs on all sides
+    private static boolean isFlagProtected(RobotController rc) throws GameActionException {
+        for (Direction dir : directions) {
+
+            try {
+                if (rc.senseMapInfo(rc.getLocation().add(dir)).getTrapType() != TrapType.EXPLOSIVE
+                        || rc.senseMapInfo(rc.getLocation().add(dir)).getTrapType() != TrapType.WATER
+                        || !rc.senseMapInfo(rc.getLocation().add(dir)).isWall()) {
+                    return false;
+                }
+            } catch (Exception e) {
+                System.out.println("Tried to move to a location beyond map... moving on...");
+            }
+
+        }
+        return true;
     }
 
 
