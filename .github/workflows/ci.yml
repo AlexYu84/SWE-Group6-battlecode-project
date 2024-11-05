@@ -1,0 +1,43 @@
+name: Gradle CI
+
+on:
+  push:
+    branches:
+      - test_Coverage  # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - test_Coverage  # Trigger on pull requests to the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # You can choose other OS like macos-latest or windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: 1.8  # Set the JDK version (match the one used in your project)
+          distribution: 'adoptopenjdk'  # Add the distribution parameter (you can also use 'zulu', 'amazon', etc.)
+
+      - name: Set up Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1  # Ensures the correct Gradle wrapper is used
+
+      - name: Build with Gradle
+        run: ./gradlew build  # Builds the project
+
+      - name: Run tests
+        run: ./gradlew test  # Runs the tests
+
+      - name: Upload JUnit test results to GitHub Actions
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: build/test-results/test/*.xml  # Uploads the JUnit test results for analysis
+
+      - name: Upload test results as check run annotation
+        uses: gradle/test-report-action@v1
+        with:
+          report-path: build/reports/tests/test/index.html  # Uploads the HTML test report
