@@ -2,6 +2,8 @@
 
 apply plugin: 'java'
 apply plugin: 'scala'
+//////// General configuration ////////
+apply plugin: 'jacoco'  // Apply the JaCoCo plugin
 
 // Compatibility version: Java 8
 sourceCompatibility = 1.8
@@ -9,7 +11,68 @@ targetCompatibility = 1.8
 
 // Validate Java version
 if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
-    throw new GradleException("The engine must be run using Java 8")
+  throw new GradleException("The engine must be run using Java 8")
+}
+
+// Directory layout.
+sourceSets {
+  main {
+    java.srcDirs = ["src"]
+    java.includes = ["**/*.java"]
+    java.destinationDirectory.set(file("$buildDir/classes"))
+
+    scala.srcDirs = ["src"]
+    scala.includes = ["**/*.scala"]
+    scala.destinationDirectory.set(file("$buildDir/classes"))
+  }
+  test {
+    java.srcDirs = ["test"]
+    java.includes = ["**/*.java"]
+    java.destinationDirectory.set(file("$buildDir/tests"))
+
+    scala.srcDirs = ["test"]
+    scala.includes = ["**/*.scala"]
+    scala.destinationDirectory.set(file("$buildDir/tests"))
+  }
+}
+
+//////// Test Coverage ////////
+
+jacoco {
+  toolVersion = "0.8.8"  // Specify JaCoCo version
+}
+
+test {
+  useJUnitPlatform()  // Ensure you're using JUnit 5 if applicable
+  finalizedBy jacocoTestReport  // Ensures the report is generated after tests
+}
+
+jacocoTestReport {
+  dependsOn test  // Ensures tests are run before generating the report
+  reports {
+    xml {
+      enabled = true
+      destination = file("$buildDir/reports/jacoco/testCoverageReport.xml")  // Set the XML report destination
+    }
+    html {
+      enabled = true
+      destination = file("$buildDir/reports/jacoco/html")  // Set the HTML report destination
+    }
+    csv.enabled = false
+  }
+}
+
+task generateCoverageReport {
+  dependsOn test, jacocoTestReport  // Ensure the coverage report task depends on the test task
+}
+
+// Compatibility version: Java 8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Validate Java version
+if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
+  throw new GradleException("The engine must be run using Java 8")
 }
 
 // Directory layout.
@@ -60,7 +123,7 @@ eclipse {
 //////// Versions ////////
 
 ext.versions = [
-  battlecode: new File(projectDir, "version.txt").text.trim()
+        battlecode: new File(projectDir, "version.txt").text.trim()
 ]
 
 configurations.all {
@@ -117,7 +180,7 @@ task update {
     def version = getVersionFromWeb((project.findProperty("onSaturn") ?: "false").toBoolean())
     if (version == null) {
       throw new Exception(
-        "Could not find new version number. Are you connected to the internet?"
+              "Could not find new version number. Are you connected to the internet?"
       )
     }
     if (versions.battlecode != version) {
@@ -166,15 +229,18 @@ configurations {
 
 def os = System.getProperty("os.name").toLowerCase()
 def clientName = os.startsWith('windows')
-                    ? 'battlecode24-client-win-'
-                    : os.startsWith('mac')
-                        ? 'battlecode24-client-mac-'
-                        : 'battlecode24-client-linux-'
+        ? 'battlecode24-client-win-'
+        : os.startsWith('mac')
+        ? 'battlecode24-client-mac-'
+        : 'battlecode24-client-linux-'
 def clientType = project.findProperty("compatibilityClient").toBoolean()
-                    ? "electron"
-                    : "tauri"
+        ? "electron"
+        : "tauri"
 
 dependencies {
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'  // JUnit 5 API
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0'  // JUnit 5 engine (required to run tests)
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.7.0'
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
   // The Battlecode engine.
@@ -229,8 +295,8 @@ task verify(type: JavaExec) {
   mainClass = 'battlecode.instrumenter.Verifier'
   classpath = sourceSets.main.runtimeClasspath
   args = [
-    project.findProperty("team") ?: "examplefuncsplayer",
-    project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
+          project.findProperty("team") ?: "examplefuncsplayer",
+          project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
   ]
 }
 
@@ -249,23 +315,23 @@ task run(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   args = ['-c=-']
   jvmArgs = [
-    '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
-    '-Dbc.server.mode=headless',
-    '-Dbc.server.map-path=maps',
-    '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
-    '-Dbc.server.debug=false',
-    '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
-    '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
-    '-Dbc.game.team-a=' + project.property('teamA'),
-    '-Dbc.game.team-b=' + project.property('teamB'),
-    '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
-    '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
-    '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
-    '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
-    '-Dbc.game.maps=' + project.property('maps'),
-    '-Dbc.server.validate-maps=' + project.property('validateMaps'),
-    '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
-    '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
+          '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
+          '-Dbc.server.mode=headless',
+          '-Dbc.server.map-path=maps',
+          '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
+          '-Dbc.server.debug=false',
+          '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
+          '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
+          '-Dbc.game.team-a=' + project.property('teamA'),
+          '-Dbc.game.team-b=' + project.property('teamB'),
+          '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
+          '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
+          '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
+          '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
+          '-Dbc.game.maps=' + project.property('maps'),
+          '-Dbc.server.validate-maps=' + project.property('validateMaps'),
+          '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
+          '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
   ]
 }
 

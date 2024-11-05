@@ -1,0 +1,62 @@
+name: Java CI with Gradle and Jacoco
+
+on:
+  pull_request:
+    branches:
+      - main  # Or specify the branch you want PRs to target
+    paths:
+      - '**/*.java'
+      - '**/*.gradle'  # Adjust if necessary to match files you want to trigger the action for
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code from the PR
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up JDK 8 (since you're using Java 8)
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '1.8'
+          distribution: 'adoptopenjdk'
+
+      # Step 3: Cache Gradle dependencies to speed up build times
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Step 4: Build the project using Gradle
+      - name: Build with Gradle
+        run: ./gradlew build jacocoTestReport
+
+      # Step 5: Upload Jacoco test coverage report (HTML)
+      - name: Upload Jacoco HTML Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test/html/
+
+      # Step 6: Comment on PR with test coverage and build status
+      - name: Comment on PR with Jacoco coverage and build status
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Build & Test Results
+
+            :white_check_mark: **Build Passed!**
+            
+            ### Test Coverage Report
+            Coverage report can be found in the attached HTML file. Please check the summary below:
+            - **Total Coverage:** `$(grep -oP 'TOTAL\s+\K[\d.]+(?=%)' build/reports/jacoco/test/html/index.html)`
+
+            You can download the detailed HTML report from [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/$(cat .github/workflows/jacoco-report/artifacts)).
+
