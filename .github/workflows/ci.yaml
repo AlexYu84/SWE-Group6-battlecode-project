@@ -22,11 +22,20 @@ jobs:
       - name: Run tests with coverage
         run: ./gradlew test jacocoTestReport
 
+      # Convert JaCoCo CSV to LCOV format
+      - name: Convert JaCoCo CSV to LCOV
+        run: |
+          mkdir -p build/reports/jacoco/lcov
+          java -jar ./gradlew jacocoTestReport --info # This generates .csv and .xml reports
+          # Assuming you have `jacoco2lcov` or similar tool installed to convert JaCoCo reports
+          java -cp jacoco2lcov.jar org.jacoco2lcov.JaCoCoToLCOV \
+            build/reports/jacoco/test/jacocoTestReport.csv > build/reports/jacoco/lcov/lcov-report.lcov
+
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v3
         with:
-          name: ref-lcov.info
-          path: build/reports/jacoco/test/jacocoTestReport.csv # Adjust if needed
+          name: ref-lcov
+          path: build/reports/jacoco/lcov/lcov-report.lcov # Upload LCOV file instead of CSV
 
   checks:
     runs-on: ubuntu-latest
@@ -43,7 +52,7 @@ jobs:
       - name: Download code coverage report from base branch
         uses: actions/download-artifact@v3
         with:
-          name: ref-lcov.info
+          name: ref-lcov
 
       - name: Build the project
         run: ./gradlew build
@@ -56,8 +65,8 @@ jobs:
         uses: barecheck/code-coverage-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }} # Use the default GitHub token
-          lcov-file: "build/reports/jacoco/test/jacocoTestReport.csv" # Ensure this matches your JaCoCo output
-          base-lcov-file: "ref-lcov.info"
+          lcov-file: "build/reports/jacoco/lcov/lcov-report.lcov" # Use the LCOV file path
+          base-lcov-file: "ref-lcov"
           minimum-ratio: 0 # This can be adjusted based on your requirements
           send-summary-comment: true
           show-annotations: "warning"
