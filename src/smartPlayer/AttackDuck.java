@@ -39,26 +39,11 @@ public class AttackDuck {
                     MapLocation[] crumbLocations = rc.senseNearbyCrumbs(-1);
                     MapLocation[] flags = rc.senseBroadcastFlagLocations();
                     MapLocation closestSpawn, myLoc = null;
+                    int randomVar = rng.nextInt(10) + 1;
+                    Direction returnDirection = rc.getLocation().directionTo(startingLocation);
 
                     if (hasFlag){
                         //head back to starting location
-                        Direction returnDirection = rc.getLocation().directionTo(startingLocation);
-//                        int randomVar = rng.nextInt(10) + 1;
-//                        if(rc.isActionReady() && randomVar % 2 == 0){
-//                            rc.dropFlag(rc.getLocation());
-//                            MapLocation currentLocation = rc.getLocation();
-//                            Direction backwardsDirection = returnDirection.opposite();
-//                            MapLocation trapLocation = currentLocation.add(backwardsDirection);
-//                            System.out.println("attempting to build trap");
-//                            if(rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
-//                                rc.build(TrapType.EXPLOSIVE, trapLocation);
-//                                rc.pickupFlag(rc.getLocation());
-//                                System.out.println("Dropping someting at: " + trapLocation);
-//                            }else{
-//                                System.out.println("Cannot build trap at: " + trapLocation);
-//                            }
-//                        }
-
                         if(rc.canMove(returnDirection)){
 //                            System.out.println("canMove returnDirection is " + returnDirection);
                             if(rc.isActionReady()) {
@@ -167,6 +152,17 @@ public class AttackDuck {
                                     awardCrumbs(rc, 30);  // Award crumbs to the team
                                     System.out.println("Awarded 30 crumbs for taking down enemy!");
                                 }
+                            }
+                        } else if (rc.isActionReady() && randomVar % 2 == 2) {
+                            MapLocation currentLocation = rc.getLocation();
+                            Direction backwardsDirection = returnDirection.opposite();
+                            MapLocation trapLocation = currentLocation.add(backwardsDirection);
+                            System.out.println("attempting to build trap");
+                            if(rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
+                                rc.build(TrapType.EXPLOSIVE, trapLocation);
+                                System.out.println("Dropping someting at: " + trapLocation);
+                            }else{
+                                System.out.println("Cannot build trap at: " + trapLocation);
                             }
                         } else {
                             if(flags.length > 0) {
