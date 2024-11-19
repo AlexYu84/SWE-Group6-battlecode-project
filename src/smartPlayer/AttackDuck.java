@@ -2,7 +2,9 @@ package smartPlayer;
 
 import battlecode.common.*;
 
+import javax.xml.stream.Location;
 import java.awt.*;
+import java.util.Locale;
 import java.util.Random;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,13 +22,13 @@ public class AttackDuck {
             Direction.NORTHWEST,
     };
 
+    static boolean hasFlag = false;
+    static boolean isStuck = false;
     static MapLocation startingLocation;
     static Set<MapLocation> recentLocations = new HashSet<>();
     static final int MAX_RECENT_LOCATIONS = 5;
 
     public static void run(RobotController rc) throws GameActionException {
-        boolean hasFlag = false;
-        boolean isStuck = false;
         startingLocation = rc.getLocation();
         while (true) {
             try {
@@ -41,6 +43,22 @@ public class AttackDuck {
                     if (hasFlag){
                         //head back to starting location
                         Direction returnDirection = rc.getLocation().directionTo(startingLocation);
+//                        int randomVar = rng.nextInt(10) + 1;
+//                        if(rc.isActionReady() && randomVar % 2 == 0){
+//                            rc.dropFlag(rc.getLocation());
+//                            MapLocation currentLocation = rc.getLocation();
+//                            Direction backwardsDirection = returnDirection.opposite();
+//                            MapLocation trapLocation = currentLocation.add(backwardsDirection);
+//                            System.out.println("attempting to build trap");
+//                            if(rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
+//                                rc.build(TrapType.EXPLOSIVE, trapLocation);
+//                                rc.pickupFlag(rc.getLocation());
+//                                System.out.println("Dropping someting at: " + trapLocation);
+//                            }else{
+//                                System.out.println("Cannot build trap at: " + trapLocation);
+//                            }
+//                        }
+
                         if(rc.canMove(returnDirection)){
 //                            System.out.println("canMove returnDirection is " + returnDirection);
                             if(rc.isActionReady()) {
@@ -49,6 +67,7 @@ public class AttackDuck {
                             if(rc.isMovementReady()) {
                                 rc.move(returnDirection);
                                 addRecentLocation(rc.getLocation());
+
                             }
                         }else{
                             // A* implementation!
@@ -129,7 +148,6 @@ public class AttackDuck {
                     }else{
                         // Sense nearby enemy robots within √4 (i.e., 2 tiles)
                         RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
-
                         if (enemies.length > 0) {
                             MapLocation enemyLocation = enemies[0].location;
                             if (rc.canMove(rc.getLocation().directionTo(enemyLocation))) {
