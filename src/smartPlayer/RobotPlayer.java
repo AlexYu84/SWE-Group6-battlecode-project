@@ -14,7 +14,7 @@ public strictfp class RobotPlayer {
 
     static int turnCount = 0;
 
-    static final Random rng = new Random(6147);
+    static Random rng = new Random(6147);
     static final Direction[] directions = {
             Direction.NORTH,
             Direction.NORTHEAST,
@@ -31,6 +31,7 @@ public strictfp class RobotPlayer {
             turnCount += 1;
 
             try {
+
                 if (!rc.isSpawned()) {
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
                     MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
@@ -39,18 +40,21 @@ public strictfp class RobotPlayer {
                     if (rc.canSpawn(randomLoc)) {
                         rc.spawn(randomLoc);
 
-                        int randomDuckType = rng.nextInt(3);
+                        int randomDuckType = rng.nextInt(10);
 
-                        switch(randomDuckType) {
-                            case 0:
-                                AttackDuck.run(rc);
-                            case 1:
-                                HealerDuck.run(rc);
-                            case 2:
-                                BuilderDuck.run(rc);
+                        if (randomDuckType <= 4) {
+                            // 50% chance for attack duck
+                            AttackDuck.run(rc);
+                        } else if (randomDuckType == 5 || randomDuckType == 6) {
+                            // 20% chance for a healer duck
+                            HealerDuck.run(rc);
+                        } else {
+                            // 30% chance for builder duck
+                            BuilderDuck.run(rc);
                         }
 
                     }
+
                 }
 
             } catch (GameActionException e) {
@@ -66,4 +70,5 @@ public strictfp class RobotPlayer {
             }
         }
     }
+
 }
