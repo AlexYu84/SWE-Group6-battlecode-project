@@ -35,12 +35,18 @@ public class AttackDuck {
                 if (rc.isSpawned()) {
                     System.out.println("Attacker Running...");
 
+
+
                     int round = rc.getRoundNum();
                     MapLocation[] crumbLocations = rc.senseNearbyCrumbs(-1);
                     MapLocation[] flags = rc.senseBroadcastFlagLocations();
                     MapLocation closestSpawn, myLoc = null;
                     int randomVar = rng.nextInt(10) + 1;
                     Direction returnDirection = rc.getLocation().directionTo(startingLocation);
+
+                    if(hasFlag && rc.getLocation().equals(startingLocation)){
+                        hasFlag = false;
+                    }
 
                     if (hasFlag){
                         //head back to starting location
@@ -165,14 +171,24 @@ public class AttackDuck {
                                 System.out.println("Cannot build trap at: " + trapLocation);
                             }
                         } else {
+                            if(rc.canPickupFlag(rc.getLocation())){
+                                rc.pickupFlag(rc.getLocation());
+                                hasFlag = true;
+                                System.out.println("Picked up a flag!");
+                            }
+
                             if(flags.length > 0) {
                                 MapLocation nearestFlag = flags[0];
+//                                for (MapLocation i : flags){
+//                                    System.out.println("flag: " + i);
+//                                }
                                 if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
                                     if(rc.isActionReady()) {
                                         fillWater(rc);
                                     }
                                     if(rc.isMovementReady()) {
                                         rc.move(rc.getLocation().directionTo(nearestFlag));
+                                        System.out.println("Moving to nearest flag: " + nearestFlag);
                                     }
                                 }else{
                                     Direction randomDir;
@@ -190,15 +206,22 @@ public class AttackDuck {
                                         }
                                     }
                                 }
-                                FlagInfo[] closeFlags = rc.senseNearbyFlags(8);
-                                if (closeFlags.length > 0) {
-                                    FlagInfo i = closeFlags[0];
-                                    if (rc.canPickupFlag(i.getLocation())) {
-                                        rc.pickupFlag(i.getLocation());
-                                        hasFlag = true;
-                                        System.out.println("Picked up a flag!");
+                            FlagInfo[] closeFlags = rc.senseNearbyFlags(8);
+                            if (closeFlags.length > 0) {
+                                System.out.println("I've sensed the flag!! going for it!");
+                                for (FlagInfo i : closeFlags) {
+                                    if (i.getTeam() != rc.getTeam()){
+                                        if (rc.canPickupFlag(i.getLocation())) {
+                                            rc.pickupFlag(i.getLocation());
+                                            hasFlag = true;
+                                            System.out.println("Picked up a flag!");
+                                            break;
+                                        } else {
+                                            System.out.println("can't pick up flag for some reason?????!");
+                                        }
                                     }
                                 }
+                            }
                             } else{
                                 Direction dir = directions[rng.nextInt(directions.length)];
                                 if (rc.canMove(dir)) {
