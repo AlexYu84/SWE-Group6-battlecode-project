@@ -170,6 +170,7 @@ public class BuilderDuck {
 
             } finally {
                 Clock.yield();
+                //break;
             }
         }
     }

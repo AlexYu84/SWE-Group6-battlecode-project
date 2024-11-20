@@ -1,0 +1,413 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > BuilderDuck</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">smartPlayer</a>
+</div>
+
+<h1>Coverage Summary for Class: BuilderDuck (smartPlayer)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BuilderDuck</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.4%
+  </span>
+  <span class="absValue">
+    (5/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    13.4%
+  </span>
+  <span class="absValue">
+    (15/112)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    25%
+  </span>
+  <span class="absValue">
+    (30/120)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package smartPlayer;
+&nbsp;
+&nbsp;import battlecode.common.*;
+&nbsp;
+&nbsp;import java.awt.*;
+&nbsp;import java.util.Arrays;
+&nbsp;import java.util.Objects;
+&nbsp;import java.util.Random;
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;public class BuilderDuck {</b>
+&nbsp;
+<b class="fc">&nbsp;    static final Random rng = new Random(6147);</b>
+&nbsp;
+<b class="fc">&nbsp;    static final Direction[] directions = {</b>
+&nbsp;            Direction.NORTH,
+&nbsp;            Direction.NORTHEAST,
+&nbsp;            Direction.EAST,
+&nbsp;            Direction.SOUTHEAST,
+&nbsp;            Direction.SOUTH,
+&nbsp;            Direction.SOUTHWEST,
+&nbsp;            Direction.WEST,
+&nbsp;            Direction.NORTHWEST,
+&nbsp;    };
+&nbsp;
+&nbsp;    public static void run(RobotController rc) throws GameActionException {
+&nbsp;
+&nbsp;        // The location of the natural barrier to where the robot will move to place the flag
+<b class="fc">&nbsp;        MapLocation naturalBarrier = null;</b>
+&nbsp;
+&nbsp;        // Robot life loop
+&nbsp;        while (true) {
+&nbsp;
+&nbsp;            try {
+&nbsp;
+<b class="pc">&nbsp;                if (rc.isSpawned()) {</b>
+&nbsp;
+<b class="fc">&nbsp;                    if(rc.getRoundNum() &lt;= GameConstants.SETUP_ROUNDS) {</b>
+&nbsp;
+&nbsp;                        // If robot can pick up flag and is in spawn, pick it up and begin moving
+<b class="pc">&nbsp;                        if (rc.canPickupFlag(rc.getLocation()) &amp;&amp; rcInSpawn(rc)) {</b>
+<b class="fc">&nbsp;                            rc.pickupFlag(rc.getLocation());</b>
+&nbsp;
+<b class="fc">&nbsp;                            Direction nextDir = directions[rng.nextInt(directions.length)];</b>
+&nbsp;
+<b class="pc">&nbsp;                            if (rc.canMove(nextDir)) {</b>
+<b class="fc">&nbsp;                                rc.move(nextDir);</b>
+&nbsp;                            }
+&nbsp;
+<b class="pc">&nbsp;                        } else if (rc.hasFlag()) {</b>
+&nbsp;
+&nbsp;                            // If the robot has the flag, move to the closest valid wall or water tile
+<b class="nc">&nbsp;                            if (naturalBarrier == null) {</b>
+&nbsp;
+<b class="nc">&nbsp;                                MapInfo[] sensedInfos = rc.senseNearbyMapInfos();</b>
+&nbsp;
+<b class="nc">&nbsp;                                for (MapInfo mapInfo : sensedInfos) {</b>
+<b class="nc">&nbsp;                                    if (mapInfo.isWall() || mapInfo.isWater()) {</b>
+<b class="nc">&nbsp;                                        naturalBarrier = mapInfo.getMapLocation(); // save water/wall tile</b>
+<b class="nc">&nbsp;                                        break;</b>
+&nbsp;                                    }
+&nbsp;                                }
+&nbsp;
+&nbsp;                                // If no barrier is found, keep moving randomly until you find one
+<b class="nc">&nbsp;                                if (naturalBarrier == null) {</b>
+<b class="nc">&nbsp;                                    Direction dir = directions[rng.nextInt(directions.length)];</b>
+<b class="nc">&nbsp;                                    if (rc.canMove(dir)) {</b>
+<b class="nc">&nbsp;                                        rc.move(dir);</b>
+&nbsp;                                    }
+&nbsp;                                }
+&nbsp;
+&nbsp;
+<b class="nc">&nbsp;                            } else { // natural barrier has been found</b>
+&nbsp;
+&nbsp;                                // Once a natural barrier is sensed, move towards it and place the flag there
+<b class="nc">&nbsp;                                Direction nextDir = rc.getLocation().directionTo(naturalBarrier);</b>
+<b class="nc">&nbsp;                                if (rc.canMove(nextDir)) {</b>
+<b class="nc">&nbsp;                                    rc.move(nextDir);</b>
+&nbsp;
+<b class="nc">&nbsp;                                } else if (rc.getLocation().add(nextDir).equals(naturalBarrier)) {</b>
+&nbsp;
+&nbsp;                                    // Keep moving randomly until a valid flag location is found
+<b class="nc">&nbsp;                                    while (!rc.senseLegalStartingFlagPlacement(rc.getLocation())) {</b>
+<b class="nc">&nbsp;                                        Direction randomDir = directions[rng.nextInt(directions.length)];</b>
+<b class="nc">&nbsp;                                        if (rc.canMove(randomDir)) {</b>
+<b class="nc">&nbsp;                                            rc.move(randomDir);</b>
+&nbsp;                                        }
+&nbsp;
+<b class="nc">&nbsp;                                    }</b>
+&nbsp;
+&nbsp;                                    // Once a valid location is found, drop the flag
+<b class="nc">&nbsp;                                    if (rc.canDropFlag(rc.getLocation())) {</b>
+<b class="nc">&nbsp;                                        rc.dropFlag(rc.getLocation());</b>
+&nbsp;
+&nbsp;                                        // Start placing bombs around the flag after dropping it
+<b class="nc">&nbsp;                                        for (Direction dir : directions) {</b>
+<b class="nc">&nbsp;                                            MapLocation trapLocation = rc.getLocation().add(dir);</b>
+<b class="nc">&nbsp;                                            if (rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {</b>
+<b class="nc">&nbsp;                                                rc.build(TrapType.EXPLOSIVE, trapLocation);</b>
+&nbsp;                                            }
+&nbsp;                                        }
+&nbsp;                                    }
+&nbsp;
+&nbsp;                                }
+<b class="nc">&nbsp;                            }</b>
+&nbsp;
+&nbsp;                        } else { // SETUP ROUND: builder actions after flags has been set
+&nbsp;
+<b class="nc">&nbsp;                            FlagInfo[] flags = rc.senseNearbyFlags(-1);</b>
+&nbsp;
+&nbsp;                            // Randomly select a flag to protect
+<b class="nc">&nbsp;                            if(flags.length &gt; 0) {</b>
+<b class="nc">&nbsp;                                FlagInfo flagToProtect = flags[rng.nextInt(flags.length)];</b>
+&nbsp;
+<b class="nc">&nbsp;                                if (!flagToProtect.isPickedUp()) {</b>
+&nbsp;
+<b class="nc">&nbsp;                                    Direction dir = rc.getLocation().directionTo(flagToProtect.getLocation());</b>
+<b class="nc">&nbsp;                                    if(!rc.getLocation().add(dir).equals(flagToProtect.getLocation())) {</b>
+<b class="nc">&nbsp;                                        if (rc.canMove(dir)) {</b>
+<b class="nc">&nbsp;                                            rc.move(dir);</b>
+&nbsp;                                        }
+&nbsp;                                    } else {
+&nbsp;
+&nbsp;                                        // this will move rc onto the flag location
+<b class="nc">&nbsp;                                        if (rc.canMove(dir)) {</b>
+<b class="nc">&nbsp;                                            rc.move(dir);</b>
+&nbsp;                                        }
+&nbsp;
+&nbsp;                                        // surround flag in all directions with explosive trap
+<b class="nc">&nbsp;                                        for (Direction direction : directions) {</b>
+<b class="nc">&nbsp;                                            if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) &amp;&amp; !rcInSpawn(rc)) {</b>
+<b class="nc">&nbsp;                                                rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));</b>
+&nbsp;                                            }
+&nbsp;                                        }
+&nbsp;                                    }
+&nbsp;                                }
+&nbsp;
+&nbsp;                                // move randomly
+<b class="nc">&nbsp;                                Direction direction = directions[rng.nextInt(directions.length)];</b>
+<b class="nc">&nbsp;                                if (rc.canMove(direction)) {</b>
+<b class="nc">&nbsp;                                    rc.move(direction);</b>
+&nbsp;                                }
+&nbsp;                            }
+&nbsp;
+<b class="nc">&nbsp;                        }</b>
+&nbsp;
+&nbsp;                    } else {
+&nbsp;                        // outside of setup rounds... do...
+&nbsp;
+<b class="fc">&nbsp;                        int action = rng.nextInt(10);</b>
+&nbsp;
+<b class="pc">&nbsp;                        if (action &lt;= 5) { // 60% chance to protect flag</b>
+<b class="nc">&nbsp;                            protectRandomFlag(rc);</b>
+<b class="pc">&nbsp;                        } else if (action == 6 || action == 7) { // 20% chance to built water trap</b>
+<b class="fc">&nbsp;                            buildWaterTraps(rc);</b>
+&nbsp;                        } else { // 20% chance to just move randomly, save crumbs
+<b class="nc">&nbsp;                            Direction direction = directions[rng.nextInt(directions.length)];</b>
+<b class="nc">&nbsp;                            if (rc.canMove(direction)) {</b>
+<b class="nc">&nbsp;                                rc.move(direction);</b>
+&nbsp;                            }
+&nbsp;                        }
+&nbsp;
+&nbsp;                    }
+&nbsp;
+&nbsp;                }
+&nbsp;
+<b class="nc">&nbsp;            }  catch (Exception e) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;Exception&quot;);</b>
+<b class="nc">&nbsp;                e.printStackTrace();</b>
+&nbsp;
+&nbsp;            } finally {
+&nbsp;                //Clock.yield();
+<b class="fc">&nbsp;                break;</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    // Helper function which will lead the RC to build water traps
+&nbsp;    private static void buildWaterTraps(RobotController rc) throws GameActionException {
+&nbsp;
+<b class="fc">&nbsp;        boolean hasTrap = false;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Direction dir : directions) {</b>
+&nbsp;
+&nbsp;            try {
+<b class="fc">&nbsp;                MapLocation mapLocation = rc.getLocation().add(dir);</b>
+<b class="pc">&nbsp;                if (rc.senseMapInfo(mapLocation).getTrapType() != TrapType.NONE) {</b>
+<b class="fc">&nbsp;                    hasTrap = true;</b>
+&nbsp;                }
+<b class="nc">&nbsp;            } catch (Exception e) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;Tried to move to a location beyond map... moving on...&quot;);</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (!hasTrap) {</b>
+<b class="nc">&nbsp;            if (rc.canBuild(TrapType.WATER, rc.getLocation()) &amp;&amp; !rcInSpawn(rc)) {</b>
+<b class="nc">&nbsp;                rc.build(TrapType.WATER, rc.getLocation());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    // Helper function which will lead the RC to randomly protect a flag and build traps around it
+&nbsp;    private static void protectRandomFlag(RobotController rc) throws GameActionException {
+&nbsp;        // Sense all nearby flags
+<b class="nc">&nbsp;        FlagInfo[] flags = rc.senseNearbyFlags(-1, rc.getTeam());</b>
+&nbsp;
+<b class="nc">&nbsp;        if(flags.length &gt; 0) {</b>
+&nbsp;
+&nbsp;            // Randomly select a flag to protect
+<b class="nc">&nbsp;            FlagInfo flagToProtect = flags[rng.nextInt(flags.length)];</b>
+&nbsp;
+&nbsp;            // Keep moving towards the flag
+<b class="nc">&nbsp;            Direction dir = rc.getLocation().directionTo(flagToProtect.getLocation());</b>
+&nbsp;
+<b class="nc">&nbsp;            if (!rc.getLocation().add(dir).equals(flagToProtect.getLocation())) {</b>
+<b class="nc">&nbsp;                if (rc.canMove(dir)) {</b>
+<b class="nc">&nbsp;                    rc.move(dir);</b>
+&nbsp;                }
+&nbsp;            } else {
+&nbsp;
+&nbsp;                // Once near the flag, perform one more move to move onto the flag location
+<b class="nc">&nbsp;                if (rc.canMove(dir)) {</b>
+<b class="nc">&nbsp;                    rc.move(dir);</b>
+&nbsp;                }
+&nbsp;
+&nbsp;                // If the nearby flag is protected, switch to attack mode, otherwise stay in defend mode
+<b class="nc">&nbsp;                if (!isFlagProtected(rc)) {</b>
+&nbsp;                    // defend mode
+&nbsp;                    // Surround flag in all directions with explosive trap
+<b class="nc">&nbsp;                    for (Direction direction : directions) {</b>
+<b class="nc">&nbsp;                        if (rc.canBuild(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction)) &amp;&amp; !rcInSpawn(rc)) {</b>
+<b class="nc">&nbsp;                            rc.build(TrapType.EXPLOSIVE, flagToProtect.getLocation().add(direction));</b>
+&nbsp;                        }
+&nbsp;                    }
+&nbsp;                } else {
+&nbsp;                    // attack mode
+&nbsp;                    // Sense nearby enemy robots
+<b class="nc">&nbsp;                    RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());</b>
+&nbsp;
+&nbsp;                    // If enemies are found, find the closest enemy and attack it.
+<b class="nc">&nbsp;                    if (nearbyEnemies.length &gt; 0) {</b>
+&nbsp;
+&nbsp;                        // find the closest enemy to attack
+<b class="nc">&nbsp;                        RobotInfo toAttack = null;</b>
+<b class="nc">&nbsp;                        int closestDistance = Integer.MAX_VALUE;</b>
+<b class="nc">&nbsp;                        for (RobotInfo enemyRobot : nearbyEnemies) {</b>
+<b class="nc">&nbsp;                            if (rc.getLocation().distanceSquaredTo(enemyRobot.getLocation()) &lt;= closestDistance) {</b>
+<b class="nc">&nbsp;                                closestDistance = rc.getLocation().distanceSquaredTo(enemyRobot.getLocation());</b>
+<b class="nc">&nbsp;                                toAttack = enemyRobot;</b>
+&nbsp;                            }
+&nbsp;                        }
+&nbsp;
+&nbsp;                        // if it can attack without moving, attack it.
+<b class="nc">&nbsp;                        if (toAttack != null) {</b>
+<b class="nc">&nbsp;                            if(rc.canAttack(toAttack.getLocation())) {</b>
+<b class="nc">&nbsp;                                rc.attack(toAttack.getLocation());</b>
+&nbsp;                            }
+&nbsp;                        }
+&nbsp;                    }
+&nbsp;                }
+&nbsp;
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    // Helper function to check if the flag near rc is protected by bombs on all sides
+&nbsp;    private static boolean isFlagProtected(RobotController rc) throws GameActionException {
+<b class="nc">&nbsp;        for (Direction dir : directions) {</b>
+&nbsp;
+&nbsp;            try {
+<b class="nc">&nbsp;                if (rc.senseMapInfo(rc.getLocation().add(dir)).getTrapType() != TrapType.EXPLOSIVE</b>
+<b class="nc">&nbsp;                        || rc.senseMapInfo(rc.getLocation().add(dir)).getTrapType() != TrapType.WATER</b>
+<b class="nc">&nbsp;                        || !rc.senseMapInfo(rc.getLocation().add(dir)).isWall()) {</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+<b class="nc">&nbsp;            } catch (Exception e) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;Tried to move to a location beyond map... moving on...&quot;);</b>
+<b class="nc">&nbsp;            }</b>
+&nbsp;
+&nbsp;        }
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    // Helper function to check if the RC is in the spawn
+&nbsp;    private static boolean rcInSpawn(RobotController rc) {
+<b class="fc">&nbsp;        MapLocation[] spawnLocations  = rc.getAllySpawnLocations();</b>
+<b class="pc">&nbsp;        for (MapLocation spawnLocation : spawnLocations) {</b>
+<b class="pc">&nbsp;            if (rc.getLocation().equals(spawnLocation)) {</b>
+<b class="fc">&nbsp;                return true;</b>
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-11-19 11:43</div>
+</div>
+</body>
+</html>

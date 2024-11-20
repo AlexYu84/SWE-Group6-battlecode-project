@@ -1,0 +1,158 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PathFind</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">smartPlayer</a>
+</div>
+
+<h1>Coverage Summary for Class: PathFind (smartPlayer)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PathFind</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (2/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    72.2%
+  </span>
+  <span class="absValue">
+    (13/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.5%
+  </span>
+  <span class="absValue">
+    (23/26)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package smartPlayer;
+&nbsp;import battlecode.common.*;
+<b class="nc">&nbsp;public class PathFind {</b>
+&nbsp;
+&nbsp;    public static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException {
+<b class="fc">&nbsp;        Direction dir = rc.getLocation().directionTo(loc);</b>
+<b class="pc">&nbsp;        if(rc.canMove(dir) &amp;&amp; (!rc.senseMapInfo(loc).isWall())) {</b>
+<b class="fc">&nbsp;            rc.move(dir);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        else if(rc.canFill(rc.getLocation().add(dir))) {</b>
+<b class="fc">&nbsp;            rc.fill(rc.getLocation().add(dir));</b>
+&nbsp;        }
+&nbsp;        else {
+<b class="fc">&nbsp;            Direction randomDir = Direction.allDirections()[RobotPlayer.rng.nextInt(8)];</b>
+<b class="pc">&nbsp;            if(rc.canMove(randomDir) &amp;&amp; (!rc.senseMapInfo(loc).isWall())) {</b>
+<b class="fc">&nbsp;                rc.move(randomDir);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;    }</b>
+&nbsp;    public static void explore(RobotController rc) throws GameActionException {
+<b class="fc">&nbsp;        MapLocation[] crumLocs = rc.senseNearbyCrumbs(-1);</b>
+<b class="fc">&nbsp;        if(crumLocs.length &gt; 0){</b>
+<b class="fc">&nbsp;            System.out.println(&quot;Crumbs found.&quot;);</b>
+<b class="fc">&nbsp;            moveTowards(rc, crumLocs[0]);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (crumLocs.length == 0) {</b>
+<b class="fc">&nbsp;            System.out.println(&quot;No crumbs found.&quot;);</b>
+<b class="pc">&nbsp;            if (rc.isMovementReady()) {</b>
+<b class="fc">&nbsp;                System.out.println(&quot;Movement is ready.&quot;);</b>
+<b class="fc">&nbsp;                Direction randomDirection = Direction.allDirections()[RobotPlayer.rng.nextInt(8)];</b>
+<b class="pc">&nbsp;                if (rc.canMove(randomDirection)) {</b>
+<b class="fc">&nbsp;                    System.out.println(&quot;Can move in direction: &quot; + randomDirection);</b>
+<b class="fc">&nbsp;                    rc.move(randomDirection);</b>
+&nbsp;                } else {
+<b class="nc">&nbsp;                    System.out.println(&quot;Cannot move in direction: &quot; + randomDirection);</b>
+&nbsp;                }
+<b class="fc">&nbsp;            } else {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;Movement is not ready.&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;    }</b>
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-11-19 11:43</div>
+</div>
+</body>
+</html>
