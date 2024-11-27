@@ -2,26 +2,13 @@ package smartPlayer;
 
 import battlecode.common.*;
 
-import javax.xml.stream.Location;
-import java.awt.*;
-import java.util.Locale;
-import java.util.Random;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 public class AttackDuck {
     static final Random rng = new Random(6147);
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
-
+    static final Direction[] directions = Direction.values();
     static boolean hasFlag = false;
     static boolean isStuck = false;
     static MapLocation startingLocation;
@@ -35,205 +22,27 @@ public class AttackDuck {
                 if (rc.isSpawned()) {
                     System.out.println("Attacker Running...");
 
-
-
                     int round = rc.getRoundNum();
                     MapLocation[] crumbLocations = rc.senseNearbyCrumbs(-1);
                     MapLocation[] flags = rc.senseBroadcastFlagLocations();
-                    MapLocation closestSpawn, myLoc = null;
-                    int randomVar = rng.nextInt(10) + 1;
+                    MapLocation closestSpawn = null;
                     Direction returnDirection = rc.getLocation().directionTo(startingLocation);
 
-                    if(hasFlag && rc.getLocation().equals(startingLocation)){
+                    if (hasFlag && rc.getLocation().equals(startingLocation)) {
                         hasFlag = false;
                     }
 
-                    if (hasFlag){
-                        //head back to starting location
-                        if(rc.canMove(returnDirection)){
-//                            System.out.println("canMove returnDirection is " + returnDirection);
-                            if(rc.isActionReady()) {
-                                fillWater(rc);
-                            }
-                            if(rc.isMovementReady()) {
-                                rc.move(returnDirection);
-                                addRecentLocation(rc.getLocation());
-
-                            }
-                        }else{
-                            // A* implementation!
-                            Direction[] allDirections = Direction.values();
-                            for (Direction direction : allDirections) {
-                                MapLocation potentialLocation = rc.getLocation().add(direction);
-                                if(rc.canMove(direction) && !recentLocations.contains(potentialLocation)){
-                                    if(rc.isMovementReady()) {
-                                        rc.move(direction);
-                                        addRecentLocation(potentialLocation);
-                                        break;
-                                    }
-                                }
-                            };
-                        }
-                        //drop flag when at starting location
-                        if(rc.getLocation() == startingLocation && rc.canDropFlag(rc.getLocation())){
-                            rc.dropFlag(rc.getLocation());
-                            hasFlag = false;
-                            System.out.println("Flag secured!");
-                            //reward 50 crumbs for retrieving flag
-                            awardCrumbs(rc, 50);
-                        }
-                    }
-
-                    if (isStuck){
+                    if (hasFlag) {
+                        moveToStartingLocation(rc, returnDirection);
+                    } else if (isStuck) {
                         fillWater(rc);
                         isStuck = false;
                     } else if (round < 150) {
-
-                        if (crumbLocations.length > 0) {
-                            MapLocation nearestCrumb = crumbLocations[0];
-                            if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
-                                if(rc.isActionReady()) {
-                                    fillWater(rc);
-                                }
-                                if(rc.isMovementReady()) {
-                                    rc.move(rc.getLocation().directionTo(nearestCrumb));
-                                }
-                            } else{
-                                isStuck = true;
-                            }
-                        }else {
-                            Direction dir = directions[rng.nextInt(directions.length)];
-                            if (rc.canMove(dir)) {
-                                if(rc.isActionReady()) {
-                                    fillWater(rc);
-                                }
-                                if(rc.isMovementReady()) {
-                                    rc.move(dir);
-                                }
-                            }
-                        }
-                    }else if (round > 150 && round < 200) {
-                        MapInfo[] damn = rc.senseNearbyMapInfos(-1);
-                        if (damn.length > 0) {
-                            MapLocation nearestDamWall = damn[0].getMapLocation();
-                            MapLocation currentLocation = rc.getLocation();
-                            double minDistance = currentLocation.distanceSquaredTo(nearestDamWall);
-
-
-                            for (MapInfo d : damn) {
-                                MapLocation damWallLocation = d.getMapLocation();
-                                double distance = currentLocation.distanceSquaredTo(damWallLocation);
-
-                                if (distance < minDistance) {
-                                    nearestDamWall = damWallLocation;
-                                    minDistance = distance;
-                                }
-                            }
-                            Direction directionToDam = currentLocation.directionTo(nearestDamWall);
-                            if (rc.canMove(directionToDam)) {
-                                if(rc.isMovementReady()) {
-                                    rc.move(directionToDam);
-                                }
-                            }
-                        }
-                    }else{
-                        // Sense nearby enemy robots within √4 (i.e., 2 tiles)
-                        RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
-                        if (enemies.length > 0) {
-                            MapLocation enemyLocation = enemies[0].location;
-                            if (rc.canMove(rc.getLocation().directionTo(enemyLocation))) {
-                                if(rc.isActionReady()) {
-                                    fillWater(rc);
-                                }
-                                if(rc.isMovementReady()) {
-                                    rc.move(rc.getLocation().directionTo(enemyLocation));
-                                }
-                            }
-                            if (rc.canAttack(enemyLocation)) {
-                                rc.attack(enemyLocation);  // Attack method handles damage internally
-                                System.out.println("Just swung at an enemy.");
-
-                                // Check if the enemy robot is destroyed and if the robot is in enemy territory
-                                if (rc.senseRobotAtLocation(enemyLocation) == null) {
-                                    awardCrumbs(rc, 30);  // Award crumbs to the team
-                                    System.out.println("Awarded 30 crumbs for taking down enemy!");
-                                }
-                            }
-                        } else if (rc.isActionReady() && randomVar % 2 == 2) {
-                            MapLocation currentLocation = rc.getLocation();
-                            Direction backwardsDirection = returnDirection.opposite();
-                            MapLocation trapLocation = currentLocation.add(backwardsDirection);
-                            System.out.println("attempting to build trap");
-                            if(rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
-                                rc.build(TrapType.EXPLOSIVE, trapLocation);
-                                System.out.println("Dropping someting at: " + trapLocation);
-                            }else{
-                                System.out.println("Cannot build trap at: " + trapLocation);
-                            }
-                        } else {
-                            if(rc.canPickupFlag(rc.getLocation())){
-                                rc.pickupFlag(rc.getLocation());
-                                hasFlag = true;
-                                System.out.println("Picked up a flag!");
-                            }
-
-                            if(flags.length > 0) {
-                                MapLocation nearestFlag = flags[0];
-//                                for (MapLocation i : flags){
-//                                    System.out.println("flag: " + i);
-//                                }
-                                if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
-                                    if(rc.isActionReady()) {
-                                        fillWater(rc);
-                                    }
-                                    if(rc.isMovementReady()) {
-                                        rc.move(rc.getLocation().directionTo(nearestFlag));
-                                        System.out.println("Moving to nearest flag: " + nearestFlag);
-                                    }
-                                }else{
-                                    Direction randomDir;
-                                    for (int i = 0; i < directions.length; i++){
-                                        randomDir = directions[rng.nextInt(directions.length)];
-                                        if (rc.canMove(randomDir)) {
-                                            if(rc.isActionReady()) {
-                                                fillWater(rc);
-                                                // cooldown stuff going on here need to fix
-                                            }
-                                            if(rc.isMovementReady()) {
-                                                rc.move(randomDir);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            FlagInfo[] closeFlags = rc.senseNearbyFlags(8);
-                            if (closeFlags.length > 0) {
-                                System.out.println("I've sensed the flag!! going for it!");
-                                for (FlagInfo i : closeFlags) {
-                                    if (i.getTeam() != rc.getTeam()){
-                                        if (rc.canPickupFlag(i.getLocation())) {
-                                            rc.pickupFlag(i.getLocation());
-                                            hasFlag = true;
-                                            System.out.println("Picked up a flag!");
-                                            break;
-                                        } else {
-                                            System.out.println("can't pick up flag for some reason?????!");
-                                        }
-                                    }
-                                }
-                            }
-                            } else{
-                                Direction dir = directions[rng.nextInt(directions.length)];
-                                if (rc.canMove(dir)) {
-                                    if(rc.isActionReady()) {
-                                        fillWater(rc);
-                                    }
-                                    if(rc.isMovementReady()) {
-                                    rc.move(dir);
-                                    }
-                                }
-                            }
-                        }
+                        handleCrumbs(rc, crumbLocations);
+                    } else if (round > 150 && round < 200) {
+                        handleDamWalls(rc);
+                    } else {
+                        handleEnemiesAndFlags(rc, flags, returnDirection);
                     }
                 } else {
                     System.err.println("Attacker not spawned properly.");
@@ -248,92 +57,197 @@ public class AttackDuck {
         }
     }
 
-    private static void fillWater(RobotController rc) throws GameActionException{
+    // Helper method to handle movement when returning to the starting location with the flag
+    private static void moveToStartingLocation(RobotController rc, Direction returnDirection) throws GameActionException {
+        if (rc.canMove(returnDirection)) {
+            if (rc.isActionReady()) {
+                fillWater(rc);
+            }
+            if (rc.isMovementReady()) {
+                rc.move(returnDirection);
+                addRecentLocation(rc.getLocation());
+            }
+        } else {
+            moveToNewLocation(rc);
+        }
+
+        if (rc.getLocation().equals(startingLocation) && rc.canDropFlag(rc.getLocation())) {
+            rc.dropFlag(rc.getLocation());
+            hasFlag = false;
+            System.out.println("Flag secured!");
+            awardCrumbs(rc, 50);
+        }
+    }
+
+    // Helper method to move to a new location using random directions
+    private static void moveToNewLocation(RobotController rc) throws GameActionException {
+        for (Direction direction : directions) {
+            MapLocation potentialLocation = rc.getLocation().add(direction);
+            if (rc.canMove(direction) && !recentLocations.contains(potentialLocation)) {
+                if (rc.isMovementReady()) {
+                    rc.move(direction);
+                    addRecentLocation(potentialLocation);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Helper method to handle crumb collection
+    private static void handleCrumbs(RobotController rc, MapLocation[] crumbLocations) throws GameActionException {
+        if (crumbLocations.length > 0) {
+            MapLocation nearestCrumb = crumbLocations[0];
+            if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
+                moveAndFillWater(rc, rc.getLocation().directionTo(nearestCrumb));
+            } else {
+                isStuck = true;
+            }
+        } else {
+            moveRandomly(rc);
+        }
+    }
+
+    // Helper method to handle movement when there are no crumbs
+    private static void moveRandomly(RobotController rc) throws GameActionException {
+        Direction dir = directions[rng.nextInt(directions.length)];
+        moveAndFillWater(rc, dir);
+    }
+
+    // Helper method to move and fill water
+    private static void moveAndFillWater(RobotController rc, Direction direction) throws GameActionException {
+        if (rc.isActionReady()) {
+            fillWater(rc);
+        }
+        if (rc.canMove(direction) && rc.isMovementReady()) {
+            rc.move(direction);
+        }
+    }
+
+    // Helper method to handle moving toward dam walls
+    private static void handleDamWalls(RobotController rc) throws GameActionException {
+        MapInfo[] damn = rc.senseNearbyMapInfos(-1);
+        if (damn.length > 0) {
+            MapLocation nearestDamWall = findNearestDamWall(rc, damn);
+            Direction directionToDam = rc.getLocation().directionTo(nearestDamWall);
+            if (rc.canMove(directionToDam) && rc.isMovementReady()) {
+                rc.move(directionToDam);
+            }
+        }
+    }
+
+    // Helper method to find the nearest dam wall
+    private static MapLocation findNearestDamWall(RobotController rc, MapInfo[] damn) {
+        MapLocation nearestDamWall = damn[0].getMapLocation();
+        double minDistance = rc.getLocation().distanceSquaredTo(nearestDamWall);
+
+        for (MapInfo d : damn) {
+            MapLocation damWallLocation = d.getMapLocation();
+            double distance = rc.getLocation().distanceSquaredTo(damWallLocation);
+            if (distance < minDistance) {
+                nearestDamWall = damWallLocation;
+                minDistance = distance;
+            }
+        }
+        return nearestDamWall;
+    }
+
+    // Helper method to handle enemy robots and flags
+    private static void handleEnemiesAndFlags(RobotController rc, MapLocation[] flags, Direction returnDirection) throws GameActionException {
+        RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+        if (enemies.length > 0) {
+            attackOrMoveTowardEnemy(rc, enemies[0].location);
+        } else if (rc.isActionReady() && rng.nextInt(2) == 1) {
+            buildTrap(rc, returnDirection);
+        } else {
+            handleFlagCollection(rc, flags);
+        }
+    }
+
+    // Helper method to attack or move toward an enemy robot
+    private static void attackOrMoveTowardEnemy(RobotController rc, MapLocation enemyLocation) throws GameActionException {
+        if (rc.canMove(rc.getLocation().directionTo(enemyLocation))) {
+            moveAndFillWater(rc, rc.getLocation().directionTo(enemyLocation));
+        }
+        if (rc.canAttack(enemyLocation)) {
+            rc.attack(enemyLocation);
+            System.out.println("Just swung at an enemy.");
+
+            if (rc.senseRobotAtLocation(enemyLocation) == null) {
+                awardCrumbs(rc, 30);
+                System.out.println("Awarded 30 crumbs for taking down enemy!");
+            }
+        }
+    }
+
+    // Helper method to handle flag collection
+    private static void handleFlagCollection(RobotController rc, MapLocation[] flags) throws GameActionException {
+        if (rc.canPickupFlag(rc.getLocation())) {
+            rc.pickupFlag(rc.getLocation());
+            hasFlag = true;
+            System.out.println("Picked up a flag!");
+        }
+
+        if (flags.length > 0) {
+            MapLocation nearestFlag = flags[0];
+            if (rc.canMove(rc.getLocation().directionTo(nearestFlag))) {
+                moveAndFillWater(rc, rc.getLocation().directionTo(nearestFlag));
+                System.out.println("Moving to nearest flag: " + nearestFlag);
+            } else {
+                moveRandomly(rc);
+            }
+        }
+    }
+
+    // Helper method to build a trap
+    private static void buildTrap(RobotController rc, Direction returnDirection) throws GameActionException {
+        MapLocation trapLocation = rc.getLocation().add(returnDirection.opposite());
+        if (rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
+            rc.build(TrapType.EXPLOSIVE, trapLocation);
+            System.out.println("Dropping something at: " + trapLocation);
+        } else {
+            System.out.println("Cannot build trap at: " + trapLocation);
+        }
+    }
+
+    // Fill water in the nearby area if possible
+    private static void fillWater(RobotController rc) throws GameActionException {
         int roundNumber = rc.getRoundNum();
-//        if(!rc.isActionReady()) return;
-        if(roundNumber > 0){
+        if (roundNumber > 0) {
             MapInfo[] water = rc.senseNearbyMapInfos(2);
-            for (MapInfo w:water){
-                MapLocation fillLoc = w.getMapLocation();
-                if(w.isWater() && rc.canFill(fillLoc)){
-                    if ((fillLoc.x+ fillLoc.y)%2 == 1){
-                        if(rc.isActionReady()) {
-                            rc.fill(fillLoc);
+            for (MapInfo w : water) {
+                if (w.isWater() && rc.canFill(w.getMapLocation())) {
+                    if ((w.getMapLocation().x + w.getMapLocation().y) % 2 == 1) {
+                        if (rc.isActionReady()) {
+                            rc.fill(w.getMapLocation());
                         }
-                    }else{
+                    } else {
                         wander(rc);
-                    }
-                    if(w.getCrumbs() > 30){
-                        if(rc.isActionReady()) {
-                            rc.fill(fillLoc);
-                            return;
-                        }
-                    }
-                    wander(rc);
-                    if (rc.canSenseLocation(fillLoc.add(Direction.NORTH))){
-                        if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
-                            if(rc.canFill(fillLoc)) {
-                                if(rc.isActionReady()) {
-                                    rc.fill(fillLoc);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    if(rc.canSenseLocation(fillLoc.add(Direction.SOUTH))){
-                        if(rc.senseMapInfo(fillLoc.add(Direction.NORTH)).isWall()){
-                            if(rc.isActionReady()) {
-                                if (rc.canFill(fillLoc)) {
-                                    rc.fill(fillLoc);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    if(rc.canSenseLocation(fillLoc.add(Direction.EAST))){
-                        if(rc.senseMapInfo(fillLoc.add(Direction.EAST)).isWall()){
-                            if(rc.isActionReady()) {
-                                if (rc.canFill(fillLoc)) {
-                                    rc.fill(fillLoc);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    if(rc.canSenseLocation(fillLoc.add(Direction.WEST))){
-                        if(rc.senseMapInfo(fillLoc.add(Direction.WEST)).isWall()){
-                            if(rc.isActionReady()) {
-                                if (rc.canFill(fillLoc)) {
-                                    rc.fill(fillLoc);
-                                    return;
-                                }
-                            }
-                        }
                     }
                 }
             }
         }
     }
 
-    private static void addRecentLocation(MapLocation location){
+    private static void addRecentLocation(MapLocation location) {
         recentLocations.add(location);
-        if(recentLocations.size() > MAX_RECENT_LOCATIONS){
+        if (recentLocations.size() > MAX_RECENT_LOCATIONS) {
             recentLocations.iterator().next();
         }
     }
 
-    private static void wander(RobotController rc) throws GameActionException{
-        Direction[] directions = {
-                Direction.NORTH, Direction.NORTHEAST, Direction.EAST, Direction.SOUTHEAST,
-                Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST
-        };
-        Random rng = new Random(6147);
-        Direction randomDir = directions[rng.nextInt(directions.length)]; if (rc.canMove(randomDir)) { if(rc.isMovementReady()){ rc.move(randomDir); }}
+    // Wander in a random direction
+    private static void wander(RobotController rc) throws GameActionException {
+        Direction randomDir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(randomDir)) {
+            if (rc.isMovementReady()) {
+                rc.move(randomDir);
+            }
+        }
     }
 
+    // Award crumbs to the team
     private static void awardCrumbs(RobotController rc, int crumbs) throws GameActionException {
-        // Example of using a shared array to track crumbs
         int currentCrumbs = rc.readSharedArray(0);  // Read crumbs from index 0 of the shared array
-        rc.writeSharedArray(0, currentCrumbs + crumbs);  // Update the shared array with the new crumbs total
+        rc.writeSharedArray(0, currentCrumbs + crumbs);  // Update the shared array with the awarded crumbs
     }
 }
