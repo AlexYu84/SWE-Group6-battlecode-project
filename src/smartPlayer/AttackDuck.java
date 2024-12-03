@@ -52,8 +52,8 @@ public class AttackDuck {
                 System.err.println("Exception: " + e.getMessage());
                 e.printStackTrace();
             } finally {
-                break;
-                // Clock.yield();
+                // break;
+                Clock.yield();
             }
         }
     }

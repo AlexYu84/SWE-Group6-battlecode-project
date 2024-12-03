@@ -28,8 +28,8 @@ public strictfp class RobotPlayer {
                 e.printStackTrace();
 
             } finally {
-                break;
-                //Clock.yield();
+                // break;
+                Clock.yield();
             }
         }
     }

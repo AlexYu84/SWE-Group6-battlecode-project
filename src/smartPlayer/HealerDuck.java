@@ -42,8 +42,8 @@ public class HealerDuck {
                 e.printStackTrace();
 
             } finally {
-                break;
-                // Clock.yield();
+                // break;
+                Clock.yield();
             }
         }
     }
