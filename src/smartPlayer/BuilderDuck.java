@@ -40,8 +40,8 @@ public class BuilderDuck {
                 e.printStackTrace();
 
             } finally {
-                //Clock.yield();
-                break;
+                Clock.yield();
+                // break;
             }
         }
     }
