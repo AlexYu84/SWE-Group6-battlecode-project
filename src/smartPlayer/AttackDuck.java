@@ -52,13 +52,14 @@ public class AttackDuck {
                 System.err.println("Exception: " + e.getMessage());
                 e.printStackTrace();
             } finally {
-                Clock.yield();
+                break;
+                // Clock.yield();
             }
         }
     }
 
     // Helper method to handle movement when returning to the starting location with the flag
-    private static void moveToStartingLocation(RobotController rc, Direction returnDirection) throws GameActionException {
+    static void moveToStartingLocation(RobotController rc, Direction returnDirection) throws GameActionException {
         if (rc.canMove(returnDirection)) {
             if (rc.isActionReady()) {
                 fillWater(rc);
@@ -80,7 +81,7 @@ public class AttackDuck {
     }
 
     // Helper method to move to a new location using random directions
-    private static void moveToNewLocation(RobotController rc) throws GameActionException {
+    static void moveToNewLocation(RobotController rc) throws GameActionException {
         for (Direction direction : directions) {
             MapLocation potentialLocation = rc.getLocation().add(direction);
             if (rc.canMove(direction) && !recentLocations.contains(potentialLocation)) {
@@ -94,7 +95,7 @@ public class AttackDuck {
     }
 
     // Helper method to handle crumb collection
-    private static void handleCrumbs(RobotController rc, MapLocation[] crumbLocations) throws GameActionException {
+    static void handleCrumbs(RobotController rc, MapLocation[] crumbLocations) throws GameActionException {
         if (crumbLocations.length > 0) {
             MapLocation nearestCrumb = crumbLocations[0];
             if (rc.canMove(rc.getLocation().directionTo(nearestCrumb))) {
@@ -108,13 +109,13 @@ public class AttackDuck {
     }
 
     // Helper method to handle movement when there are no crumbs
-    private static void moveRandomly(RobotController rc) throws GameActionException {
+    static void moveRandomly(RobotController rc) throws GameActionException {
         Direction dir = directions[rng.nextInt(directions.length)];
         moveAndFillWater(rc, dir);
     }
 
     // Helper method to move and fill water
-    private static void moveAndFillWater(RobotController rc, Direction direction) throws GameActionException {
+    static void moveAndFillWater(RobotController rc, Direction direction) throws GameActionException {
         if (rc.isActionReady()) {
             fillWater(rc);
         }
@@ -124,7 +125,7 @@ public class AttackDuck {
     }
 
     // Helper method to handle moving toward dam walls
-    private static void handleDamWalls(RobotController rc) throws GameActionException {
+    static void handleDamWalls(RobotController rc) throws GameActionException {
         MapInfo[] damn = rc.senseNearbyMapInfos(-1);
         if (damn.length > 0) {
             MapLocation nearestDamWall = findNearestDamWall(rc, damn);
@@ -136,7 +137,7 @@ public class AttackDuck {
     }
 
     // Helper method to find the nearest dam wall
-    private static MapLocation findNearestDamWall(RobotController rc, MapInfo[] damn) {
+    static MapLocation findNearestDamWall(RobotController rc, MapInfo[] damn) {
         MapLocation nearestDamWall = damn[0].getMapLocation();
         double minDistance = rc.getLocation().distanceSquaredTo(nearestDamWall);
 
@@ -152,7 +153,7 @@ public class AttackDuck {
     }
 
     // Helper method to handle enemy robots and flags
-    private static void handleEnemiesAndFlags(RobotController rc, MapLocation[] flags, Direction returnDirection) throws GameActionException {
+    static void handleEnemiesAndFlags(RobotController rc, MapLocation[] flags, Direction returnDirection) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(4, rc.getTeam().opponent());
         if (enemies.length > 0) {
             attackOrMoveTowardEnemy(rc, enemies[0].location);
@@ -164,7 +165,7 @@ public class AttackDuck {
     }
 
     // Helper method to attack or move toward an enemy robot
-    private static void attackOrMoveTowardEnemy(RobotController rc, MapLocation enemyLocation) throws GameActionException {
+    static void attackOrMoveTowardEnemy(RobotController rc, MapLocation enemyLocation) throws GameActionException {
         if (rc.canMove(rc.getLocation().directionTo(enemyLocation))) {
             moveAndFillWater(rc, rc.getLocation().directionTo(enemyLocation));
         }
@@ -180,7 +181,7 @@ public class AttackDuck {
     }
 
     // Helper method to handle flag collection
-    private static void handleFlagCollection(RobotController rc, MapLocation[] flags) throws GameActionException {
+    static void handleFlagCollection(RobotController rc, MapLocation[] flags) throws GameActionException {
         if (rc.canPickupFlag(rc.getLocation())) {
             rc.pickupFlag(rc.getLocation());
             hasFlag = true;
@@ -199,7 +200,7 @@ public class AttackDuck {
     }
 
     // Helper method to build a trap
-    private static void buildTrap(RobotController rc, Direction returnDirection) throws GameActionException {
+    static void buildTrap(RobotController rc, Direction returnDirection) throws GameActionException {
         MapLocation trapLocation = rc.getLocation().add(returnDirection.opposite());
         if (rc.canBuild(TrapType.EXPLOSIVE, trapLocation)) {
             rc.build(TrapType.EXPLOSIVE, trapLocation);
@@ -210,7 +211,7 @@ public class AttackDuck {
     }
 
     // Fill water in the nearby area if possible
-    private static void fillWater(RobotController rc) throws GameActionException {
+    static void fillWater(RobotController rc) throws GameActionException {
         int roundNumber = rc.getRoundNum();
         if (roundNumber > 0) {
             MapInfo[] water = rc.senseNearbyMapInfos(2);
@@ -228,7 +229,7 @@ public class AttackDuck {
         }
     }
 
-    private static void addRecentLocation(MapLocation location) {
+    static void addRecentLocation(MapLocation location) {
         recentLocations.add(location);
         if (recentLocations.size() > MAX_RECENT_LOCATIONS) {
             recentLocations.iterator().next();
@@ -236,7 +237,7 @@ public class AttackDuck {
     }
 
     // Wander in a random direction
-    private static void wander(RobotController rc) throws GameActionException {
+    static void wander(RobotController rc) throws GameActionException {
         Direction randomDir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(randomDir)) {
             if (rc.isMovementReady()) {
@@ -246,7 +247,7 @@ public class AttackDuck {
     }
 
     // Award crumbs to the team
-    private static void awardCrumbs(RobotController rc, int crumbs) throws GameActionException {
+    static void awardCrumbs(RobotController rc, int crumbs) throws GameActionException {
         int currentCrumbs = rc.readSharedArray(0);  // Read crumbs from index 0 of the shared array
         rc.writeSharedArray(0, currentCrumbs + crumbs);  // Update the shared array with the awarded crumbs
     }

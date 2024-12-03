@@ -7,8 +7,11 @@ import static battlecode.common.TrapType.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static smartPlayer.BuilderDuck.isFlagProtected;
+import static smartPlayer.BuilderDuck.rcInSpawn;
+
 import org.junit.Test;
 import java.util.Arrays;
+import java.util.Random;
 
 public class  BuilderDuckTest {
 
@@ -353,5 +356,88 @@ public class  BuilderDuckTest {
 
         builderDuck.run(rc);
     }
+
+    @Test
+    public void testHandleSetupRoundPickupAndMove() throws GameActionException {
+        RobotController rc = mock(RobotController.class);
+        MapLocation rcLocation = new MapLocation(1, 1);
+        when(rc.getLocation()).thenReturn(rcLocation);
+        when(rc.canPickupFlag(rcLocation)).thenReturn(true);
+        when(rc.getAllySpawnLocations()).thenReturn(new MapLocation[]{rcLocation});
+        when(rc.canMove(any(Direction.class))).thenReturn(true);
+
+        BuilderDuck.handleSetupRound(rc, null);
+
+        verify(rc).pickupFlag(rcLocation);
+        verify(rc).move(any(Direction.class));
+    }
+
+    @Test
+    public void testHandleSetupRoundFindBarrierAndMove() throws GameActionException {
+        RobotController rc = mock(RobotController.class);
+        MapLocation rcLocation = new MapLocation(1, 1);
+        when(rc.getLocation()).thenReturn(rcLocation);
+        when(rc.canPickupFlag(rcLocation)).thenReturn(false);
+        when(rc.hasFlag()).thenReturn(true);
+        when(rc.senseNearbyMapInfos()).thenReturn(new MapInfo[]{});
+        when(rc.canMove(any(Direction.class))).thenReturn(true);
+
+        BuilderDuck.handleSetupRound(rc, null);
+
+        verify(rc).move(any(Direction.class));
+    }
+
+    @Test
+    public void testHandleSetupRoundMoveToBarrierAndPlaceFlag() throws GameActionException {
+        RobotController rc = mock(RobotController.class);
+        MapLocation rcLocation = new MapLocation(1, 1);
+        MapLocation barrierLocation = new MapLocation(2, 2);
+        when(rc.getLocation()).thenReturn(rcLocation);
+        when(rc.canPickupFlag(rcLocation)).thenReturn(false);
+        when(rc.hasFlag()).thenReturn(true);
+        when(rc.canMove(any(Direction.class))).thenReturn(true);
+
+        BuilderDuck.handleSetupRound(rc, barrierLocation);
+
+        verify(rc).move(any(Direction.class));
+    }
+
+//    @Test
+//    public void testHandleNonSetupRoundProtectRandomFlag() throws GameActionException {
+//        Random rng = mock(Random.class);
+//        RobotController rc = mock(RobotController.class);
+//        when(rng.nextInt(anyInt())).thenReturn(1);
+//        when(rc.getLocation()).thenReturn(new MapLocation(1, 1));
+//        when(rc.senseNearbyFlags(-1, rc.getTeam())).thenReturn(new FlagInfo[]{mock(FlagInfo.class)});
+//        when(rc.canMove(any(Direction.class))).thenReturn(true);
+//
+//        BuilderDuck.handleNonSetupRound(rc);
+//
+//        verify(rc, atLeastOnce()).move(any(Direction.class));
+//    }
+
+//    @Test
+//    public void testHandleNonSetupRoundBuildWaterTraps() throws GameActionException {
+//        RobotController rc = mock(RobotController.class);
+//        when(rc.getLocation()).thenReturn(new MapLocation(1, 1));
+//        when(rc.canBuild(eq(TrapType.WATER), any(MapLocation.class))).thenReturn(true);
+//        when(rc.getAllySpawnLocations()).thenReturn(new MapLocation[]{new MapLocation(0, 1)});
+//        //when(rcInSpawn(rc)).thenReturn(false);
+//
+//        BuilderDuck.handleNonSetupRound(rc);
+//
+//        verify(rc, atLeastOnce()).build(eq(TrapType.WATER), any(MapLocation.class));
+//    }
+
+//    @Test
+//    public void testHandleNonSetupRoundMoveRandomly() throws GameActionException {
+//        RobotController rc = mock(RobotController.class);
+//        when(rc.getLocation()).thenReturn(new MapLocation(1, 1));
+//        when(rc.canMove(any(Direction.class))).thenReturn(true);
+//
+//        BuilderDuck.handleNonSetupRound(rc);
+//
+//        verify(rc, atLeastOnce()).move(any(Direction.class));
+//    }
 
 }
